@@ -5,15 +5,13 @@ from flask import Flask, render_template, request, redirect, url_for
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from werkzeug.utils import secure_filename
-from datetime import datetime as dt
 from werkzeug.security import generate_password_hash, check_password_hash
 from model import db, User
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'thisissecret'
 app.config['SQLALCHEMY_DATABASE_URI'] = "postgresql://postgres:dhiman223@localhost:5432/ecommercedb"
-app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-
+db = SQLAlchemy(app)
+migrate = Migrate(app, db)
 
 # Routes
 @app.route('/')
