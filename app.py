@@ -10,8 +10,10 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from model import db, User
 
 app = Flask(__name__)
+app.config['SECRET_KEY'] = 'thisissecret'
 app.config['SQLALCHEMY_DATABASE_URI'] = "postgresql://postgres:dhiman223@localhost:5432/ecommercedb"
-db.init_app(app)
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+
 
 # Routes
 @app.route('/')
