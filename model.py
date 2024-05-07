@@ -14,7 +14,4 @@ class User(db.Model):
     
     def __repr__(self):
         return f"User( '{self.user_firstname},{self.user_lastnamename}', '{self.email_address}')"
-
-
-
  
