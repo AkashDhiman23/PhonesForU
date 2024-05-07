@@ -55,7 +55,7 @@
                     </div>
                 </div>
                 <div class="modal-footer d-flex justify-content-center">
-                    <div class="signup-section">Not a member yet? <a href="#a" class="text-info"> Sign Up</a>.</div>
+                    <div class="signup-section">Not a member yet? <a href="#signupModal" class="text-info" data-toggle="modal" data-dismiss="modal">Sign Up</a>.</div>
                 </div>
             </div>
         </div>
@@ -93,10 +93,11 @@
                             </div>
                             <button type="submit" class="btn btn-info btn-block btn-round">Signup</button>
                         </form>
+                        <span id="signup-message" class="text-danger"></span>
                     </div>
                 </div>
                 <div class="modal-footer d-flex justify-content-center">
-                    <div class="signup-section">Already member ?<a href="#a" class="text-info"> Login </a>.</div>
+                    <div class="signup-section">Already a member? <a href="#loginModal" class="text-info" data-toggle="modal" data-dismiss="modal">Login</a>.</div>
                 </div>
             </div>
         </div>
@@ -119,12 +120,14 @@ $('#login-form').submit(function(e) {
         data: $(this).serialize(),
         success: function(response) {
             $('#login-message').text(response.message);
-            // Redirect user after successful login
-            window.location.href = '/index'; 
+            
         },
         error: function(xhr, status, error) {
             $('#login-message').text(xhr.responseJSON.message);
+             // Redirect to home page upon successful login
+             window.location.href = "/index.html";
         }
+        
     });
 });
 
@@ -136,12 +139,14 @@ $('#signup-form').submit(function(e) {
         type: 'POST',
         data: $(this).serialize(),
         success: function(response) {
-            $('#signup-message').text(response.message);
-            // Redirect user after successful signup
-            window.location.href = '/index'; 
+            if (response.success) {
+                $('#signup-message').text(response.message).removeClass('text-danger').addClass('text-success');
+            } else {
+                $('#signup-message').text(response.message).removeClass('text-success').addClass('text-danger');
+            }
         },
         error: function(xhr, status, error) {
-            $('#signup-message').text(xhr.responseJSON.message);
+            $('#signup-message').text("Error: " + xhr.responseJSON.message).removeClass('text-success').addClass('text-danger');
         }
     });
 });

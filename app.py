@@ -21,6 +21,7 @@ db.init_app(app)
 def index():
     return render_template('index.html')
 
+
 @app.route('/signup', methods=['POST'])
 def signup():
     firstname = request.form['firstname']
@@ -31,7 +32,7 @@ def signup():
 
     existing_user = User.query.filter_by(email_address=email).first()
     if existing_user:
-        return jsonify({'message': 'Email address already exists!'}), 400
+        return jsonify({'success': False, 'message': 'Email address is already registered.'})
     
     password_hash = generate_password_hash(password)
 
@@ -39,7 +40,7 @@ def signup():
     db.session.add(new_user)
     db.session.commit()
 
-    return jsonify({'message': 'Signup successful!'}), 200
+    return jsonify({'success': True, 'message': 'Signup successful!'})
 
 @app.route('/login', methods=['POST'])
 def login():
