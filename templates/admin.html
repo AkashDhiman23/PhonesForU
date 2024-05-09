@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NZ Tech</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@200&display=swap" rel="stylesheet">
+    <!-- Bootstrap CSS -->
+    <link rel='stylesheet' href='https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.1.2/css/bootstrap.min.css'>
+    <link rel="stylesheet" href="static\css\style.css">
+</head>
+<body>
+    <nav>
+        <input type="checkbox" id="nav-toggle">
+        <div class="logo"><img src="static\img\NZ Tech.png" alt="Logo"></div>
+        <ul class="links">
+            <li>
+                <a href="#" data-toggle="modal" data-target="#loginModal">Login</a>
+            </li>
+            <li>
+                <a href="#" data-toggle="modal" data-target="#signupModal">Signup</a>
+            </li>
+        </ul>
+        <label for="nav-toggle" class="icon-burger">
+            <div class="line"></div>
+            <div class="line"></div>
+            <div class="line"></div>
+        </label>
+    </nav>
+
+    <!-- Login Modal -->
+    <div class="modal fade" id="loginModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header border-bottom-0">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">×</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-title text-center">
+                        <h4>Login</h4>
+                    </div>
+                    <div class="d-flex flex-column text-center">
+                        <form id="login-form">
+                            <div class="form-group">
+                                <input type="email" class="form-control" name="email" placeholder="Enter Email address">
+                            </div>
+                            <div class="form-group">
+                                <input type="password" class="form-control" name="password" placeholder="Enter Password">
+                            </div>
+                            <button type="submit" class="btn btn-info btn-block btn-round">Login</button>
+                        </form>
+                        <span id="login-message" class="text-danger"></span>
+                    </div>
+                </div>
+                <div class="modal-footer d-flex justify-content-center">
+                    <div class="signup-section">Not a member yet? <a href="#signupModal" class="text-info" data-toggle="modal" data-dismiss="modal">Sign Up</a>.</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Signup Modal -->
+<div class="modal fade" id="signupModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header border-bottom-0">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">×</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-title text-center">
+                    <h4>Signup for Merchant</h4>
+                </div>
+                <div class="d-flex flex-column text-center">
+                    <form id="signup-form">
+                      <div class="form-group">
+                        <div class="form-group">
+                          <input type="text" class="form-control" name="companyregisterno" placeholder="Enter Company Registration No.">
+                      </div>
+                        <input type="text" class="form-control" name="companyname" placeholder="Enter Company name  ">
+                    </div>
+                        <div class="form-group">
+                            <input type="text" class="form-control" name="firstname" placeholder="Enter First name ">
+                        </div>
+                        <div class="form-group">
+                            <input type="text" class="form-control" name="lastname" placeholder="Enter Last name ">
+                        </div>
+                        <div class="form-group">
+                            <input type="email" class="form-control" name="email" placeholder="Enter Company Email address">
+                        </div>
+                        
+                        <div class="form-group">
+                          <input type="text" class="form-control" name="companyaddress" placeholder="Enter Company address ">
+                      </div>
+                      <div class="form-group">
+                        <input type="text" class="form-control" name="companypostcode" placeholder="Enter Company postcode ">
+                    </div>
+                        
+                     
+                        <div class="form-group">
+                            <input type="text" class="form-control" name="mobile" placeholder="Enter Company phone number">
+                        </div>
+                        <div class="form-group">
+                          <input type="password" class="form-control" name="password" placeholder="Enter Password">
+                      </div>
+                        <button type="submit" class="btn btn-info btn-block btn-round">Signup</button>
+                    </form>
+                    <span id="signup-message" class="text-danger"></span>
+                </div>
+            </div>
+            <div class="modal-footer d-flex justify-content-center">
+                <div class="signup-section">Already a member? <a href="#loginModal" class="text-info" data-toggle="modal" data-dismiss="modal">Login</a>.</div>
+            </div>
+        </div>
+    </div>
+  </div>
+    
+
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- Bootstrap JS -->
+    <script src='https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js'></script>
+    <!-- Your custom JavaScript -->
+    <script>
+        // AJAX for login form submission
+$('#login-form').submit(function(e) {
+    e.preventDefault();
+    $.ajax({
+        url: '/loginmerchant',
+        type: 'POST',
+        data: $(this).serialize(),
+        success: function(response) {
+            $('#login-message').text(response.message);
+            
+        },
+        error: function(xhr, status, error) {
+            $('#login-message').text(xhr.responseJSON.message);
+             // Redirect to home page upon successful login
+             window.location.href = "/index.html";
+        }
+        
+    });
+});
+
+// AJAX for signup form submission
+$('#signup-form').submit(function(e) {
+    e.preventDefault();
+    $.ajax({
+        url: '/signupmerchant',
+        type: 'POST',
+        data: $(this).serialize(),
+        success: function(response) {
+            if (response.success) {
+                $('#signup-message').text(response.message).removeClass('text-danger').addClass('text-success');
+            } else {
+                $('#signup-message').text(response.message).removeClass('text-success').addClass('text-danger');
+            }
+        },
+        error: function(xhr, status, error) {
+            $('#signup-message').text("Error: " + xhr.responseJSON.message).removeClass('text-success').addClass('text-danger');
+        }
+    });
+});
+    </script>
+</body>
+</html>
