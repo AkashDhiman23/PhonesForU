@@ -1,0 +1,55 @@
+<!-- Delete Modal code -->
+<div id="delete_model_{{ product_category.id }}" class="modal">
+    <span onclick="document.getElementById('delete_model_{{ product_category.id }}').style.display='none'" class="close" title="Close Modal">×</span>
+    <form id="delete_product_category_{{ product_category.id }}_form" class="modal-content" action="">
+        <div class="container" style="background-color: #fff; margin-left:20%; margin-right:30%;">
+            <h1>Delete Contact</h1>
+            <h4>Are you sure you want to delete this contact?</h4>
+            <div class="clearfix">
+                <!-- Close the delete modal if we click the cancel button -->
+                <button type="button" onclick="document.getElementById('delete_model_{{ product_category.id }}').style.display='none'" class="cancelbtn btn-info btn-md">Cancel</button>
+                <!-- But if we want to delete then call the function to delete it and reload the user's page-->
+                <input type="submit" class="deletebtn btn-danger btn-md" value="Delete"/>
+            </div>
+        </div>
+    </form>
+    <div class="success-msg" id="success-output-msg"></div>
+    <div class="failure-msg" id="failure-output-msg"></div>
+</div>
+
+<script>
+    // Get the modal
+    var modal = document.getElementById('delete_model_{{ product_category.id }}');
+    
+    // When the user clicks anywhere outside of the modal, close it
+    window.onclick = function(event) {
+        if (event.target == modal) {
+            modal.style.display = "none";
+        }
+    }
+</script>
+
+<!-- Jquery and Ajax for user deletion -->
+<script type="text/javascript">
+    $(document).ready(function() {
+        $('#delete_product_category_{{ product_category.id }}_form').on('submit',function(e){
+            $.ajax({
+                data: {
+                    message: "Delete this contact!"
+                },
+                type: 'POST',
+                url: '/delete-proceed/{{ product_category.id }}/' // Adjust URL to use category ID
+            })
+            .done(function(data){
+                if (data.success){
+                    $('#success-output-msg').text(data.output_msg).show();
+                    window.location.href = '/categories';
+                }
+                else {
+                    $('#failure-output-msg').text(data.output_msg).show();
+                }
+            });
+            e.preventDefault();
+        });
+    });
+</script>

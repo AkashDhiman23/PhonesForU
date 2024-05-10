@@ -31,4 +31,13 @@ class MerchantUser(db.Model):
     def __repr__(self):
         return f"MerchantUser('{self.firstname}, {self.lastname}', '{self.company_emailaddress}')"
 
+class ProductCategory(db.Model):
+    __tablename__ = 'product_category'
+
+    id = db.Column(db.Integer, primary_key=True)
+    product_category_name = db.Column(db.String(255), unique=True, nullable=False)
+    product_category_code = db.Column(db.String(50), unique=True, nullable=False)
+
+    def __repr__(self):
+        return f"<ProductCategory id={self.id}, name='{self.product_category_name}'>"
  
