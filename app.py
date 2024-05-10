@@ -161,6 +161,43 @@ def productCategory():
 def logout():
     session.pop('username', None)
     return render_template('admin.html')
+
+@app.route('/edit/<int:category_id>')
+def edit_category(category_id):
+    category = ProductCategory.query.get(category_id)
+    if category:
+        return render_template('edit_category.html', category=category)
+    else:
+        return redirect(url_for('categories'))
+    
+@app.route('/update_category/<int:category_id>', methods=['POST'])
+def update_category(category_id):
+    # Fetch the category with the provided ID from the database
+    category = ProductCategory.query.get(category_id)
+    if category:
+        # Update category attributes with the data from the form submission
+        category.product_category_name = request.form['category_name']
+        category.product_category_code = request.form['category_code']
+        # Commit the changes to the database
+        db.session.commit()
+        # Redirect to the categories page after successful update
+        return redirect(url_for('categories'))
+    else:
+        # If category with the provided ID does not exist, redirect to categories page
+        return redirect(url_for('categories'))
+
+
+@app.route('/view_products/<int:category_id>')
+def view_products(category_id):
+    
+    category = ProductCategory.query.get(category_id)
+    if category:
+        products = Product.query.filter_by(category_id=category_id).all()
+        return render_template('products_list.html', category=category, products=products)
+    else:
+        # If category with the provided ID does not exist, redirect to categories page
+        return redirect(url_for('categories'))
+    
 if __name__ == '__main__':
     app.run(debug=True)
 

@@ -16,9 +16,6 @@
         <div class="logo"><img src="static/img/NZ Tech.png" alt="Logo"></div>
         <ul class="links">
             <li>
-                <a href="/addnewcategory">Add New Category</a>
-            </li>
-            <li>
                 <a href="#" onclick="confirmLogout()">Logout</a>
             </li>
         </ul>
@@ -39,6 +36,7 @@
                         <th>Category Code</th>
                         <th>Edit</th>
                         <th>Delete</th>
+                        <th>View Products List</th> 
                     </tr>
                 </thead>
                 <tbody>
@@ -51,12 +49,22 @@
                         <td>
                             <button class="btn btn-danger" onclick="document.getElementById('delete_model_{{product_category.id}}').style.display='block'">Delete</button>
                         </td>
+                        <td>
+                            <a href="/view_products/{{ product_category.id }}" class="btn btn-info">View Products</a> <!-- New button for viewing products -->
+                        </td>
                         <!-- Modal code -->
                         {% include 'delete_model.html' %}
                     </tr>
                     {% endfor %}
                 </tbody>
             </table>
+        </div>
+
+        <!-- Button for adding a new category -->
+        <div class="row mt-4">
+            <div class="col-md-1 text-center">
+                <a href="/addnewcategory" class="btn btn-success">Add New Category</a>
+            </div>
         </div>
     </div>
 

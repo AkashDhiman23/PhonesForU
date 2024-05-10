@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Category</title>
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.1.2/css/bootstrap.min.css">
+</head>
+<body>
+    <div class="container mt-5">
+        <h2>Edit Category</h2>
+        <!-- Form to update category with AJAX -->
+        <form id="update-category-form">
+            <div class="form-group">
+                <label for="category_name">Category Name</label>
+                <input type="text" class="form-control" id="category_name" name="category_name" value="{{ category.product_category_name }}" required>
+            </div>
+            <div class="form-group">
+                <label for="category_code">Category Code</label>
+                <input type="text" class="form-control" id="category_code" name="category_code" value="{{ category.product_category_code }}" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Update Category</button>
+        </form>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js"></script>
+    <!-- jQuery -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            $('#update-category-form').submit(function(e) {
+                e.preventDefault(); 
+                var formData = $(this).serialize(); 
+                
+                $.ajax({
+                    url: '/update_category/{{ category.id }}', 
+                    type: 'POST', 
+                    data: formData, 
+                    success: function(response) {
+                        alert('Category updated successfully!');
+                        window.location.href = "/categories";
+                    },
+                    error: function(xhr, status, error) {
+                        alert('Error updating category: ' + error);
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>
