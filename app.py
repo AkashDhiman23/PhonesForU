@@ -6,7 +6,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
-from model import ProductCategory, db, User,MerchantUser
+from model import ProductCategory, ProductList, db, User,MerchantUser
 
 
 app = Flask(__name__)
@@ -132,7 +132,7 @@ def deleteproceed(id):
             output_msg = "Sorry, this user no longer exists in our system. Just cancel and reload the page."
         # Do this if the contact to delete is existing in the database
         else:
-            # grab static url of image of contact to delete
+            # grab static url of image of category to delete
             # get the full url path
 
             db.session.delete(category_to_delete)
@@ -169,34 +169,80 @@ def edit_category(category_id):
         return render_template('edit_category.html', category=category)
     else:
         return redirect(url_for('categories'))
-    
+
+
 @app.route('/update_category/<int:category_id>', methods=['POST'])
 def update_category(category_id):
-    # Fetch the category with the provided ID from the database
     category = ProductCategory.query.get(category_id)
     if category:
-        # Update category attributes with the data from the form submission
         category.product_category_name = request.form['category_name']
         category.product_category_code = request.form['category_code']
-        # Commit the changes to the database
         db.session.commit()
-        # Redirect to the categories page after successful update
         return redirect(url_for('categories'))
-    else:
-        # If category with the provided ID does not exist, redirect to categories page
-        return redirect(url_for('categories'))
-
-
-@app.route('/view_products/<int:category_id>')
-def view_products(category_id):
     
-    category = ProductCategory.query.get(category_id)
-    if category:
-        products = Product.query.filter_by(category_id=category_id).all()
-        return render_template('products_list.html', category=category, products=products)
     else:
-        # If category with the provided ID does not exist, redirect to categories page
         return redirect(url_for('categories'))
+    
+@app.route('/addnewproduct/<int:category_id>', methods=['GET', 'POST'])
+def add_new_product(category_id):
+    category = ProductCategory.query.get(category_id)
+    if not category:
+        return redirect(url_for('categories'))
+
+    if request.method == 'POST':
+        # Get form data
+        product_name = request.form['product_name']
+        product_code = request.form['product_code']
+        product_title = request.form['product_title']
+        product_description = request.form['product_description']
+        product_price = float(request.form['product_price'])
+        product_quantity = int(request.form['product_quantity'])
+        product_main_image = request.files['product_main_image']
+        product_secondary_image1 = request.files.get('product_secondary_image1')
+        product_secondary_image2 = request.files.get('product_secondary_image2')
+
+        # Save product images to a folder and get their paths
+        main_image_path = save_image(product_main_image)
+        secondary_image1_path = save_image(product_secondary_image1) if product_secondary_image1 else None
+        secondary_image2_path = save_image(product_secondary_image2) if product_secondary_image2 else None
+
+        # Create a new ProductList instance
+        new_product = ProductList(
+            product_name=product_name,
+            product_code=product_code,
+            product_title=product_title,
+            product_description=product_description,
+            product_price=product_price,
+            product_quantity=product_quantity,
+            product_main_image=main_image_path,
+            product_secondary_image1=secondary_image1_path,
+            product_secondary_image2=secondary_image2_path,
+            category_id=category_id
+        )
+
+        # Add the new product to the database
+        db.session.add(new_product)
+        db.session.commit()
+
+        # Redirect to the page showing products
+        return redirect(url_for('viewproducts'))  # Fix this line
+
+    return render_template('addnewproduct.html', category=category)
+
+# Function to save uploaded image file to the filesystem
+def save_image(file):
+    if file:
+        
+        file_path = 'static\img\product_img' + file.filename
+        file.save(file_path)
+        return file_path
+
+@app.route('/viewproducts')
+def viewproduct():
+    # Assume you have a list of products that you want to pass to the template
+    products = ProductList.query.all()  
+    return render_template('viewproducts.html', products=products)
+
     
 if __name__ == '__main__':
     app.run(debug=True)

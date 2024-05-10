@@ -3,11 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Categories</title>
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@200&display=swap" rel="stylesheet">
+    <title>Product List</title>
     <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.1.2/css/bootstrap.min.css">
+    <!-- Your custom CSS -->
     <link rel="stylesheet" href="static/css/style.css">
 </head>
 <body>
@@ -32,38 +31,32 @@
                 <thead class="bg-light">
                     <tr>
                         <th>ID</th>
-                        <th>Category Name</th>
-                        <th>Category Code</th>
+                        <th>Product Name</th>
+                        <th>Product Code</th>
                         <th>Edit</th>
                         <th>Delete</th>
-                        <th>View Products List</th> 
                     </tr>
                 </thead>
                 <tbody>
-                    {% for product_category in categories %}
+                    {% for product in products %}
                     <tr>
-                        <td>{{ product_category.id }}</td>
-                        <td>{{ product_category.product_category_name }}</td>
-                        <td>{{ product_category.product_category_code }}</td>
-                        <td><a href="/edit/{{ product_category.id }}" class="btn btn-primary">Edit</a></td>
+                        <td>{{ product.id }}</td>
+                        <td>{{ product.product_name }}</td>
+                        <td>{{ product.product_code }}</td>
+                        <td><a href="/edit/{{ product.id }}" class="btn btn-primary">Edit</a></td>
                         <td>
-                            <button class="btn btn-danger" onclick="document.getElementById('delete_model_{{product_category.id}}').style.display='block'">Delete</button>
+                            <button class="btn btn-danger" onclick="document.getElementById('delete_model_{{ product.id }}').style.display='block'">Delete</button>
                         </td>
-                        <td>
-                            <a href="/addnewproduct/{{ product_category.id }}" class="btn btn-info">View Products</a> <!-- New button for viewing products -->
-                        </td>
-                        <!-- Modal code -->
-                        {% include 'delete_model.html' %}
                     </tr>
                     {% endfor %}
                 </tbody>
             </table>
         </div>
 
-        <!-- Button for adding a new category -->
+        <!-- Button for adding a new product -->
         <div class="row mt-4">
             <div class="col-md-1 text-center">
-                <a href="/addnewcategory" class="btn btn-success">Add New Category</a>
+                <a href="/addnewproduct" class="btn btn-success">Add New Product</a>
             </div>
         </div>
     </div>

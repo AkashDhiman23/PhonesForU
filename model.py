@@ -40,4 +40,24 @@ class ProductCategory(db.Model):
 
     def __repr__(self):
         return f"<ProductCategory id={self.id}, name='{self.product_category_name}'>"
- 
+    
+
+class ProductList(db.Model):
+    __tablename__ = 'Product'
+
+    id = db.Column(db.Integer, primary_key=True)
+    product_name = db.Column(db.String(255), nullable=False)
+    product_code = db.Column(db.String(50), nullable=False)
+    product_title = db.Column(db.String(255), nullable=False)
+    product_description = db.Column(db.String(1000), nullable=False)
+    product_price = db.Column(db.Numeric(10, 2), nullable=False)  # Decimal with 2 decimal places
+    product_quantity = db.Column(db.Integer, nullable=False)
+    product_main_image = db.Column(db.String(255), nullable=False)
+    product_secondary_image1 = db.Column(db.String(255))
+    product_secondary_image2 = db.Column(db.String(255))
+
+    # Foreign key relationship to ProductCategory
+    category_id = db.Column(db.Integer, db.ForeignKey('product_category.id'), nullable=False)
+
+    # Relationship to access related ProductCategory object
+    category = db.relationship('ProductCategory', backref='products')
