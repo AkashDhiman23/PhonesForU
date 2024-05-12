@@ -11,7 +11,8 @@
 <body>
     <div class="container mt-5">
         <h2>Add New Product</h2>
-        <form action="/addnewproduct" method="post" enctype="multipart/form-data">
+        <form action="/addnewproduct/{{product_category.id }}" enctype="multipart/form-data" method="post">
+
             <div class="form-group">
                 <label for="product_name">Product Name</label>
                 <input type="text" class="form-control" id="product_name" name="product_name" required>

@@ -3,18 +3,69 @@ import os
 import psycopg2
 from flask import Flask, render_template, request,session, redirect, url_for, jsonify
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy.orm import Session
 from flask_migrate import Migrate
 from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
 from model import ProductCategory, ProductList, db, User,MerchantUser
 
+from datetime import datetime as dt
 
-app = Flask(__name__)
+app = Flask(__name__, static_url_path='/static')
+
 app.config['SQLALCHEMY_DATABASE_URI'] = "postgresql://postgres:dhiman223@localhost:5432/ecommercedb"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config['STATIC_FOLDER'] = 'static'
 migrate = Migrate(app, db)
 db.init_app(app)
+PRODUCT_PIC_UPLOAD_FOLDER = 'static/img/product_img/'
+
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
+
+
+app.config['SECRET_KEY'] = 'thisissecret'
+app.config['PRODUCT_IMAGE_UPLOAD_FOLDER'] = 'static/img/product_images'
+
+
+def save_file(file, upload_folder):
+    if not os.path.exists(upload_folder):
+        os.makedirs(upload_folder)
+    
+    if file and allowed_file(file.filename):
+        filename = secure_filename(file.filename)
+        dt_now = dt.now().strftime("%Y%m%d%H%M%S%f")
+        file_extension = get_file_extension(filename)
+        filename_to_save = f"{dt_now}_{filename}"
+        file_path = os.path.join(upload_folder, filename_to_save)
+        file.save(file_path)
+        return file_path
+    return None
+def allowed_file(filename):
+   
+    print("Here??")
+    file_name_split = filename.rsplit('.', 1)
+    print("Here too??")
+    file_extension = file_name_split[1]
+    print(file_extension)
+    if file_extension in ALLOWED_EXTENSIONS:
+        return True
+    else:
+        return False
+    '''
+
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+           '''
+
+# function to get the file extension
+def get_file_extension(filename):
+    print("Here??")
+    file_name_split = filename.rsplit('.', 1)
+    print("Here too??")
+    file_extension = file_name_split[1]
+    print(file_extension)
+    return file_extension
+
 
 # Routes
 @app.route('/')
@@ -145,7 +196,26 @@ def deleteproceed(id):
         output_msg = "Whoops something went wrong while performing this deletion. Please reload page and try again"    
     return jsonify({'output_msg': output_msg, 'success': success})
 
+@app.route('/delete-product/<int:id>/', methods=['POST'])
+def delete_product(id):
+    output_msg = ""
+    success = False
 
+    try:
+        # Check if the product to delete exists in the database
+        product_to_delete = ProductList.query.get(id)
+        if not product_to_delete:
+            output_msg = "Sorry, this product no longer exists in our system. Please reload the page."
+        else:
+            # Delete the product from the database
+            db.session.delete(product_to_delete)
+            db.session.commit()
+            success = True
+            output_msg = "This product has been successfully removed from the system"
+    except Exception as e:
+        output_msg = f"An error occurred while deleting the product: {str(e)}"
+
+    return jsonify({'output_msg': output_msg, 'success': success})
 
 @app.route('/categories')
 def categories():
@@ -182,15 +252,16 @@ def update_category(category_id):
     
     else:
         return redirect(url_for('categories'))
-    
+
 @app.route('/addnewproduct/<int:category_id>', methods=['GET', 'POST'])
-def add_new_product(category_id):
+def add_new_product_route(category_id):
     category = ProductCategory.query.get(category_id)
     if not category:
         return redirect(url_for('categories'))
 
     if request.method == 'POST':
-        # Get form data
+        # Handle the POST request to add a new product
+        # Retrieve form data and handle file uploads
         product_name = request.form['product_name']
         product_code = request.form['product_code']
         product_title = request.form['product_title']
@@ -201,49 +272,42 @@ def add_new_product(category_id):
         product_secondary_image1 = request.files.get('product_secondary_image1')
         product_secondary_image2 = request.files.get('product_secondary_image2')
 
-        # Save product images to a folder and get their paths
-        main_image_path = save_image(product_main_image)
-        secondary_image1_path = save_image(product_secondary_image1) if product_secondary_image1 else None
-        secondary_image2_path = save_image(product_secondary_image2) if product_secondary_image2 else None
+        main_image_path = save_file(product_main_image, app.config['PRODUCT_IMAGE_UPLOAD_FOLDER'])
+        secondary_image1_path = save_file(product_secondary_image1, app.config['PRODUCT_IMAGE_UPLOAD_FOLDER']) if product_secondary_image1 else None
+        secondary_image2_path = save_file(product_secondary_image2, app.config['PRODUCT_IMAGE_UPLOAD_FOLDER']) if product_secondary_image2 else None
 
-        # Create a new ProductList instance
-        new_product = ProductList(
-            product_name=product_name,
-            product_code=product_code,
-            product_title=product_title,
-            product_description=product_description,
-            product_price=product_price,
-            product_quantity=product_quantity,
-            product_main_image=main_image_path,
-            product_secondary_image1=secondary_image1_path,
-            product_secondary_image2=secondary_image2_path,
-            category_id=category_id
-        )
+        # Handle file upload for profile picture
+        # ...
 
-        # Add the new product to the database
-        db.session.add(new_product)
-        db.session.commit()
+        try:
+            # Create a new ProductList object and add it to the database
+            new_product = ProductList(
+                product_name=product_name,
+                product_code=product_code,
+                product_title=product_title,
+                product_description=product_description,
+                product_price=product_price,
+                product_quantity=product_quantity,
+                product_main_image=main_image_path,
+                product_secondary_image1=secondary_image1_path,
+                product_secondary_image2=secondary_image2_path,
+                category_id=category_id
+            )
+            db.session.add(new_product)
+            db.session.commit()
+            return redirect(url_for('viewproducts', category_id=category_id))
+        except Exception as e:
+            print("An error occurred:", e)
+            return render_template('addnewproduct.html', category=category, error_message="An error occurred. Please try again.")
+    else:
+        return render_template('addnewproduct.html', product_category=category)
 
-        # Redirect to the page showing products
-        return redirect(url_for('viewproducts'))  # Fix this line
+@app.route('/viewproducts/<int:category_id>')
+def viewproducts(category_id):
+    products = ProductList.query.filter_by(category_id=category_id).all()
+    product_category = ProductCategory.query.get(category_id)  # Fetch the product category
+    return render_template('viewproducts.html', products=products, product_category=product_category)
 
-    return render_template('addnewproduct.html', category=category)
-
-# Function to save uploaded image file to the filesystem
-def save_image(file):
-    if file:
-        
-        file_path = 'static\img\product_img' + file.filename
-        file.save(file_path)
-        return file_path
-
-@app.route('/viewproducts')
-def viewproduct():
-    # Assume you have a list of products that you want to pass to the template
-    products = ProductList.query.all()  
-    return render_template('viewproducts.html', products=products)
-
-    
 if __name__ == '__main__':
     app.run(debug=True)
 

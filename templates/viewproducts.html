@@ -7,12 +7,13 @@
     <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.1.2/css/bootstrap.min.css">
     <!-- Your custom CSS -->
-    <link rel="stylesheet" href="static/css/style.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+   
 </head>
 <body>
     <nav>
         <input type="checkbox" id="nav-toggle">
-        <div class="logo"><img src="static/img/NZ Tech.png" alt="Logo"></div>
+        <div class="logo"><img src="{{ url_for('static', filename='img/NZ Tech.png') }}" alt="Logo"></div>
         <ul class="links">
             <li>
                 <a href="#" onclick="confirmLogout()">Logout</a>
@@ -33,8 +34,11 @@
                         <th>ID</th>
                         <th>Product Name</th>
                         <th>Product Code</th>
+                        <th>Price</th>
+                        <th>Quantity</th>
                         <th>Edit</th>
                         <th>Delete</th>
+                        <th>Image</th> <!-- Moved the Image column here -->
                     </tr>
                 </thead>
                 <tbody>
@@ -43,20 +47,42 @@
                         <td>{{ product.id }}</td>
                         <td>{{ product.product_name }}</td>
                         <td>{{ product.product_code }}</td>
-                        <td><a href="/edit/{{ product.id }}" class="btn btn-primary">Edit</a></td>
+                        <td>{{ product.product_price }}</td>
+                        <td>{{ product.product_quantity }}</td>
                         <td>
-                            <button class="btn btn-danger" onclick="document.getElementById('delete_model_{{ product.id }}').style.display='block'">Delete</button>
+                            <a href="/edit/{{ product.id }}" class="btn btn-primary">Edit</a>
                         </td>
+                        <td>
+                            <button class="btn btn-danger" onclick="document.getElementById('delete_product_model_{{ product.id }}').style.display='block'">Delete</button>
+                        </td>
+                        <!-- <td> Moved the <td> element containing the image here -->
+                            {% if product.product_main_image %}
+                            <img src="{{ product.product_main_image }}" 
+                                alt=""
+                                style="width: 45px; height: 45px"
+                                class="rounded-circle"
+                            />
+                            {% else %}
+                            <!-- Add a default image here if no product image is available -->
+                            <img
+                                src="https://mdbootstrap.com/img/new/avatars/8.jpg"
+                                 alt=""
+                                style="width: 45px; height: 45px"
+                                class="rounded-circle"
+                             />
+                            {% endif %}
+                        </td>
+                        <!-- Modal code -->
+                        {% include 'productdelete_model.html' %}
                     </tr>
                     {% endfor %}
                 </tbody>
             </table>
         </div>
-
         <!-- Button for adding a new product -->
         <div class="row mt-4">
             <div class="col-md-1 text-center">
-                <a href="/addnewproduct" class="btn btn-success">Add New Product</a>
+                <a href="/addnewproduct/{{ product_category.id }}" class="btn btn-success">Add New Product</a>
             </div>
         </div>
     </div>
@@ -67,7 +93,7 @@
             if (confirmation) {
                 window.location.href = "{{ url_for('logout') }}";
             } else {
-                // If user cancels, do nothing
+              
             }
         }
     </script>
