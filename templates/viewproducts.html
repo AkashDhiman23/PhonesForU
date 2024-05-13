@@ -6,6 +6,7 @@
     <title>Product List</title>
     <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.1.2/css/bootstrap.min.css">
+    
     <!-- Your custom CSS -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
    
@@ -13,7 +14,7 @@
 <body>
     <nav>
         <input type="checkbox" id="nav-toggle">
-        <div class="logo"><img src="{{ url_for('static', filename='img/NZ Tech.png') }}" alt="Logo"></div>
+        <div class="logo"><img src="{{ url_for('static', filename='img/logo.png') }}" alt="Logo"></div>
         <ul class="links">
             <li>
                 <a href="#" onclick="confirmLogout()">Logout</a>
@@ -27,7 +28,7 @@
     </nav>
 
     <div class="container">
-        <div class="table-responsive">
+        <div class="table-responsive" style="margin-top: 100px;">
             <table class="table table-striped mt-5">
                 <thead class="bg-light">
                     <tr>
@@ -38,7 +39,7 @@
                         <th>Quantity</th>
                         <th>Edit</th>
                         <th>Delete</th>
-                        <th>Image</th> <!-- Moved the Image column here -->
+                        <th>Image</th> 
                     </tr>
                 </thead>
                 <tbody>
@@ -49,27 +50,22 @@
                         <td>{{ product.product_code }}</td>
                         <td>{{ product.product_price }}</td>
                         <td>{{ product.product_quantity }}</td>
-                        <td>
-                            <a href="/edit/{{ product.id }}" class="btn btn-primary">Edit</a>
-                        </td>
+                        <td><a href="/edit_product/{{ product.id }}" class="btn btn-primary">Edit</a></td>
                         <td>
                             <button class="btn btn-danger" onclick="document.getElementById('delete_product_model_{{ product.id }}').style.display='block'">Delete</button>
                         </td>
-                        <!-- <td> Moved the <td> element containing the image here -->
+                        <td> 
+                            <!-- Moved the element containing the image here -->
                             {% if product.product_main_image %}
-                            <img src="{{ product.product_main_image }}" 
-                                alt=""
-                                style="width: 45px; height: 45px"
-                                class="rounded-circle"
-                            />
+                            <img src="{{ url_for('static', filename='img/product_images/' + product.product_main_image) }}" alt="Product Image"
+                                 style="width: 45px; height: 45px"
+                                 class="rounded-circle">
                             {% else %}
                             <!-- Add a default image here if no product image is available -->
-                            <img
-                                src="https://mdbootstrap.com/img/new/avatars/8.jpg"
-                                 alt=""
-                                style="width: 45px; height: 45px"
-                                class="rounded-circle"
-                             />
+                            <img src="{{ url_for('static', filename='img/logo.png') }}" 
+                                 alt="Default Image"
+                                 style="width: 45px; height: 45px"
+                                 class="rounded-circle">
                             {% endif %}
                         </td>
                         <!-- Modal code -->
@@ -83,6 +79,9 @@
         <div class="row mt-4">
             <div class="col-md-1 text-center">
                 <a href="/addnewproduct/{{ product_category.id }}" class="btn btn-success">Add New Product</a>
+            </div>
+            <div class="col-md-11 text-right">
+                <a href="javascript:history.back()" class="btn btn-info">Back</a>
             </div>
         </div>
     </div>

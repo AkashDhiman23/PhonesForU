@@ -1,7 +1,7 @@
 
 import os
 import psycopg2
-from flask import Flask, render_template, request,session, redirect, url_for, jsonify
+from flask import Flask, render_template, request,session, redirect, url_for, jsonify,flash
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import Session
 from flask_migrate import Migrate
@@ -307,6 +307,52 @@ def viewproducts(category_id):
     products = ProductList.query.filter_by(category_id=category_id).all()
     product_category = ProductCategory.query.get(category_id)  # Fetch the product category
     return render_template('viewproducts.html', products=products, product_category=product_category)
+
+
+@app.route('/edit_product/<int:product_id>', methods=['GET', 'POST'])
+def edit_product(product_id):
+    product = ProductList.query.get(product_id)
+    category_id = None  # Initialize category_id outside the if-else block
+    if product:
+        category_id = product.category_id
+        product_category = ProductCategory.query.get(category_id)  # Fetch the product category
+        if request.method == 'POST':
+            # Logic to update the product based on the form data
+            
+            # Assuming the product has been successfully updated
+            flash('Product updated successfully!', 'success')
+            # Redirect to viewproducts route with category_id
+            return redirect(url_for('viewproducts', category_id=category_id))
+        else:
+            return render_template('edit_product.html', product=product, product_category=product_category)
+    else:
+        flash('Product not found!', 'error')
+        # Redirect to viewproducts route without specifying category_id
+        return redirect(url_for('viewproducts'))
+
+@app.route('/update_product/<int:product_id>', methods=['POST'])
+def update_product(product_id):
+    product = ProductList.query.get(product_id)
+    if product:
+        # Update product details based on form data
+        product.product_name = request.form['product_name']
+        product.product_code = request.form['product_code']
+        product.product_title = request.form['product_title']
+        product.product_description = request.form['product_description']
+        product.product_price = request.form['product_price']
+        product.product_quantity = request.form['product_quantity']
+        # Add more fields to update as needed
+        
+        db.session.commit()
+        
+        # Redirect to the viewproducts route with the correct category_id
+        return redirect(url_for('viewproducts', category_id=product.category_id))
+    else:
+        flash('Product not found!', 'error')
+        return redirect(url_for('viewproducts',category_id=product.category_id))  # Redirect to viewproducts without category_id
+
+
+
 
 if __name__ == '__main__':
     app.run(debug=True)
