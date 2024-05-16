@@ -8,6 +8,7 @@ from flask_migrate import Migrate
 from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
 from model import ProductCategory, ProductList, db, User,MerchantUser
+from sqlalchemy.sql.expression import func
 
 from datetime import datetime as dt
 
@@ -18,19 +19,15 @@ app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config['STATIC_FOLDER'] = 'static'
 migrate = Migrate(app, db)
 db.init_app(app)
-PRODUCT_PIC_UPLOAD_FOLDER = 'static/img/product_img/'
+PRODUCT_IMAGE_UPLOAD_FOLDER = 'static/img/product_images/'
 
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 
 
 app.config['SECRET_KEY'] = 'thisissecret'
-app.config['PRODUCT_IMAGE_UPLOAD_FOLDER'] = 'static/img/product_images'
-
+app.config['PRODUCT_IMAGE_UPLOAD_FOLDER'] = 'static/img/product_images/'
 
 def save_file(file, upload_folder):
-    if not os.path.exists(upload_folder):
-        os.makedirs(upload_folder)
-    
     if file and allowed_file(file.filename):
         filename = secure_filename(file.filename)
         dt_now = dt.now().strftime("%Y%m%d%H%M%S%f")
@@ -40,38 +37,40 @@ def save_file(file, upload_folder):
         file.save(file_path)
         return file_path
     return None
+
 def allowed_file(filename):
-   
-    print("Here??")
-    file_name_split = filename.rsplit('.', 1)
-    print("Here too??")
-    file_extension = file_name_split[1]
-    print(file_extension)
-    if file_extension in ALLOWED_EXTENSIONS:
-        return True
-    else:
-        return False
-    '''
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-    return '.' in filename and \
-           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
-           '''
-
-# function to get the file extension
 def get_file_extension(filename):
-    print("Here??")
-    file_name_split = filename.rsplit('.', 1)
-    print("Here too??")
-    file_extension = file_name_split[1]
-    print(file_extension)
-    return file_extension
+    return filename.rsplit('.', 1)[1].lower()
 
+
+
+def get_random_products(limit):
+    return ProductList.query.order_by(func.random()).limit(limit).all()
 
 # Routes
 @app.route('/')
 def index():
-    return render_template('index.html')
+     # Query the database to get all product categories
+  
+    random_products = get_random_products(6)  # Fetch 6 random products
+    categories = ProductCategory.query.all()
+    print(random_products)
+    for product in random_products:
+        print(product.product_main_image)
+    return render_template('index.html', random_products=random_products, categories=categories)
 
+# Function to check if a file has an allowed extension
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+@app.route('/userproduct/<int:category_id>')
+def get_products_by_category(category_id):
+    # Query the database to get products for the given category ID
+    products = ProductList.query.filter_by(category_id=category_id).all()
+   
+    return render_template('userproduct.html', products=products)
 
 @app.route('/signup', methods=['POST'])
 def signup():
@@ -260,7 +259,6 @@ def add_new_product_route(category_id):
         return redirect(url_for('categories'))
 
     if request.method == 'POST':
-        # Handle the POST request to add a new product
         # Retrieve form data and handle file uploads
         product_name = request.form['product_name']
         product_code = request.form['product_code']
@@ -272,12 +270,10 @@ def add_new_product_route(category_id):
         product_secondary_image1 = request.files.get('product_secondary_image1')
         product_secondary_image2 = request.files.get('product_secondary_image2')
 
+        # Save the images
         main_image_path = save_file(product_main_image, app.config['PRODUCT_IMAGE_UPLOAD_FOLDER'])
         secondary_image1_path = save_file(product_secondary_image1, app.config['PRODUCT_IMAGE_UPLOAD_FOLDER']) if product_secondary_image1 else None
         secondary_image2_path = save_file(product_secondary_image2, app.config['PRODUCT_IMAGE_UPLOAD_FOLDER']) if product_secondary_image2 else None
-
-        # Handle file upload for profile picture
-        # ...
 
         try:
             # Create a new ProductList object and add it to the database
@@ -298,62 +294,84 @@ def add_new_product_route(category_id):
             return redirect(url_for('viewproducts', category_id=category_id))
         except Exception as e:
             print("An error occurred:", e)
-            return render_template('addnewproduct.html', category=category, error_message="An error occurred. Please try again.")
+            return render_template('addnewproduct.html', product_category=category, error_message="An error occurred. Please try again.")
     else:
         return render_template('addnewproduct.html', product_category=category)
 
-@app.route('/viewproducts/<int:category_id>')
+
+@app.route('/viewproducts/<int:category_id>', methods=['GET', 'POST'])
 def viewproducts(category_id):
     products = ProductList.query.filter_by(category_id=category_id).all()
     product_category = ProductCategory.query.get(category_id)  # Fetch the product category
+    for product in products:
+        print(product.product_main_image)
+        product.product_main_image = '/' + product.product_main_image
     return render_template('viewproducts.html', products=products, product_category=product_category)
-
 
 @app.route('/edit_product/<int:product_id>', methods=['GET', 'POST'])
 def edit_product(product_id):
+    # Fetch the product from the database
     product = ProductList.query.get(product_id)
-    category_id = None  # Initialize category_id outside the if-else block
-    if product:
-        category_id = product.category_id
-        product_category = ProductCategory.query.get(category_id)  # Fetch the product category
-        if request.method == 'POST':
-            # Logic to update the product based on the form data
-            
-            # Assuming the product has been successfully updated
-            flash('Product updated successfully!', 'success')
-            # Redirect to viewproducts route with category_id
-            return redirect(url_for('viewproducts', category_id=category_id))
-        else:
-            return render_template('edit_product.html', product=product, product_category=product_category)
-    else:
+
+    # If the product doesn't exist, redirect to viewproducts route
+    if not product:
         flash('Product not found!', 'error')
-        # Redirect to viewproducts route without specifying category_id
         return redirect(url_for('viewproducts'))
 
-@app.route('/update_product/<int:product_id>', methods=['POST'])
-def update_product(product_id):
-    product = ProductList.query.get(product_id)
-    if product:
-        # Update product details based on form data
+    # Fetch the product category
+    product_category = ProductCategory.query.get(product.category_id)
+
+    if request.method == 'POST':
+        # Retrieve form data
         product.product_name = request.form['product_name']
         product.product_code = request.form['product_code']
         product.product_title = request.form['product_title']
         product.product_description = request.form['product_description']
-        product.product_price = request.form['product_price']
-        product.product_quantity = request.form['product_quantity']
-        # Add more fields to update as needed
-        
-        db.session.commit()
-        
-        # Redirect to the viewproducts route with the correct category_id
-        return redirect(url_for('viewproducts', category_id=product.category_id))
-    else:
-        flash('Product not found!', 'error')
-        return redirect(url_for('viewproducts',category_id=product.category_id))  # Redirect to viewproducts without category_id
+        product.product_price = float(request.form['product_price'])
+        product.product_quantity = int(request.form['product_quantity'])
+
+        # Handle main product image upload
+        if 'product_main_image' in request.files:
+            product_main_image = request.files['product_main_image']
+            if product_main_image.filename != '':
+                filename = secure_filename(product_main_image.filename)
+                main_image_path = os.path.join(app.config['PRODUCT_IMAGE_UPLOAD_FOLDER'], filename)
+                product_main_image.save(main_image_path)
+                product.product_main_image = main_image_path
+
+        # Handle secondary product images uploads
+        if 'product_secondary_image1' in request.files:
+            product_secondary_image1 = request.files['product_secondary_image1']
+            if product_secondary_image1.filename != '':
+                filename = secure_filename(product_secondary_image1.filename)
+                secondary_image1_path = os.path.join(app.config['PRODUCT_IMAGE_UPLOAD_FOLDER'], filename)
+                product_secondary_image1.save(secondary_image1_path)
+                product.product_secondary_image1 = secondary_image1_path
+
+        if 'product_secondary_image2' in request.files:
+            product_secondary_image2 = request.files['product_secondary_image2']
+            if product_secondary_image2.filename != '':
+                filename = secure_filename(product_secondary_image2.filename)
+                secondary_image2_path = os.path.join(app.config['PRODUCT_IMAGE_UPLOAD_FOLDER'], filename)
+                product_secondary_image2.save(secondary_image2_path)
+                product.product_secondary_image2 = secondary_image2_path
+
+        try:
+            # Commit changes to the database
+            db.session.commit()
+            flash('Product updated successfully!', 'success')
+            # Redirect to viewproducts route with category_id
+            return redirect(url_for('viewproducts', category_id=product.category_id))
+        except Exception as e:
+            print("An error occurred:", e)
+            flash('An error occurred while updating the product. Please try again.', 'error')
+            return render_template('edit_product.html', product=product, product_category=product_category)
+
+    # Render the edit_product.html template with the product and product category
+    return render_template('edit_product.html', product=product, product_category=product_category)
 
 
-
-
+    
 if __name__ == '__main__':
     app.run(debug=True)
 
