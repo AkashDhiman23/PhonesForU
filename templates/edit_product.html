@@ -38,18 +38,23 @@
                 <label for="product_quantity">Product Quantity</label>
                 <input type="number" class="form-control" id="product_quantity" name="product_quantity" value="{{ product.product_quantity }}" required>
             </div>
-            <div class="form-group">
-                <label for="product_main_image">Product Main Image</label>
-                <input type="file" class="form-control-file" id="product_main_image" name="product_main_image" required>
-            </div>
-            <div class="form-group">
-                <label for="product_secondary_image1">Product Secondary Image 1</label>
-                <input type="file" class="form-control-file" id="product_secondary_image1" name="product_secondary_image1">
-            </div>
-            <div class="form-group">
-                <label for="product_secondary_image2">Product Secondary Image 2</label>
-                <input type="file" class="form-control-file" id="product_secondary_image2" name="product_secondary_image2">
-            </div>
+            <label for="product_main_image">Main Image:</label>
+        <input type="file" id="product_main_image" name="product_main_image"><br><br>
+        {% if product.product_main_image %}
+            <img src="{{ url_for('static', filename=product.product_main_image) }}" alt="Main Image" style="max-width: auto;">
+        {% endif %}<br><br>
+        
+        <label for="product_secondary_image1">Secondary Image 1:</label>
+        <input type="file" id="product_secondary_image1" name="product_secondary_image1"><br><br>
+        {% if product.product_secondary_image1 %}
+            <img src="{{ url_for('static', filename=product.product_secondary_image1) }}" alt="Secondary Image 1" style="max-width: auto;">
+        {% endif %}<br><br>
+        
+        <label for="product_secondary_image2">Secondary Image 2:</label>
+        <input type="file" id="product_secondary_image2" name="product_secondary_image2"><br><br>
+        {% if product.product_secondary_image2 %}
+            <img src="{{ url_for('static', filename=product.product_secondary_image2) }}" alt="Secondary Image 2" style="max-width: auto;">
+        {% endif %}<br><br>
             <!-- Add more fields as needed -->
             <button type="submit" class="btn btn-primary">Update Product</button>
         </form>

@@ -1,0 +1,74 @@
+/* Custom CSS for product description section */
+.container-fluid {
+    padding-top: 100px; /* Add space between the navigation bar and the product description */
+}
+
+/* Custom CSS for product container */
+.product-container {
+    border: 2px solid #ccc; /* Add border */
+    border-radius: 12px; /* Add border radius for rounded corners */
+    padding: 30px; /* Add padding */
+    overflow: auto; /* Add scrollbars if content exceeds container height */
+    margin: 0 auto; /* Center the container horizontally */
+    display: flex; /* Use flexbox for layout */
+    flex-direction: column; /* Arrange items vertically */
+}
+
+/* Custom CSS for carousel images */
+.carousel-item img {
+    max-height: calc(100% - 80px); /* Adjust the maximum height of the carousel images */
+    margin: auto; /* Center the images horizontally */
+    display: block; /* Ensure the images are displayed as blocks */
+}
+
+/* Custom CSS for carousel inner */
+.product-container .carousel-inner {
+    border-radius: 12px; /* Add border radius for carousel images */
+    overflow: hidden; /* Hide overflow to prevent images from sticking out */
+}
+
+/* Adjust product details width */
+.product-details {
+    width: 100%; /* Set width to fill the container */
+    padding-left: 20px; /* Add space between carousel and product details */
+}
+
+/* Custom CSS for carousel navigation controls */
+.carousel-control-prev,
+.carousel-control-next {
+    display: flex; /* Use flexbox */
+    justify-content: center; /* Align content horizontally to the center */
+    align-items: center; /* Align content vertically to the center */
+}
+
+/* Adjust the size of the carousel navigation icons */
+.carousel-control-prev-icon,
+.carousel-control-next-icon {
+    width: 40px; /* Set the width */
+    height: 40px; /* Set the height */
+    background-size: contain; /* Ensure the icon fits inside the container */
+    filter: brightness(0) invert(1); /* Darken the arrows */
+}
+
+/* Darken the arrows on hover */
+.carousel-control-prev:hover,
+.carousel-control-next:hover {
+    filter: brightness(0.8) invert(1); /* Darken the arrows on hover */
+}
+
+/* Footer */
+footer {
+    background-color: #000; /* Set background color */
+    color: #fff; /* Set text color */
+}
+
+/* Footer links */
+footer a {
+    color: #fff; /* Set link color */
+}
+
+/* Footer links hover effect */
+footer a:hover {
+    text-decoration: none; /* Remove underline on hover */
+    color: #ccc; /* Set link hover color */
+}

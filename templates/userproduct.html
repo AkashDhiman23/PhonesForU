@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Product List</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@200&display=swap" rel="stylesheet">
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <link rel="stylesheet" href="static/css/style.css">
 </head>
 <body>
@@ -13,7 +16,6 @@
         <ul class="links">
             <li><a href="#" data-toggle="modal" data-target="#loginModal">Login</a></li>
             <li><a href="#" data-toggle="modal" data-target="#signupModal">Signup</a></li>
-            <li><a href="/admin">Merchant</a></li>
             <!-- Dropdown for categories -->
             <li class="nav-item dropdown">
                 <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -115,23 +117,28 @@
         <div class="row">
             {% for product in products %}
             <div class="col-sm-6 col-md-4 col-lg-3 mb-4">
-                <div class="card">
-                    <img src="{{ product.product_main_image }}" class="card-img-top" alt="{{ product.product_title }}">
-                    <div class="card-body">
-                        <h5 class="card-title">{{ product.product_name }}</h5>
-                        <p class="card-text">{{ product.product_title }}</p>
-                        <p class="card-text">Price: ${{ product.product_price }}</p>
-                        <a href="#" class="btn btn-primary">View Details</a>
+                <a href="/product/{{ product.id }}" class="card-link"> <!-- Add anchor tag here -->
+                    <div class="card">
+                        <img src="{{ product.product_main_image }}" class="card-img-top" alt="{{ product.product_title }}">
+                        <div class="card-body">
+                            <h5 class="card-title">{{ product.product_name }}</h5>
+                            <p class="card-text">{{ product.product_title }}</p>
+                            <p class="card-text">Price: ${{ product.product_price }}</p>
+                            <a href="#" class="btn btn-primary">View Details</a>
+                        </div>
                     </div>
-                </div>
+                </a> <!-- Close anchor tag here -->
             </div>
             {% endfor %}
         </div>
     </div>
+    
 </body>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+<!-- jQuery -->
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<!-- Bootstrap JS and Popper.js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 <script>
     $(document).ready(function() {
         // Event handler for category links
@@ -151,6 +158,24 @@
             });
         });
     });
+
+    
+    $(document).ready(function() {
+            $('.category-link').click(function(e) {
+                e.preventDefault(); // Prevent default navigation behavior
+                var categoryId = $(this).attr('href').split('/').pop(); // Extract category ID from href attribute
+                $.ajax({
+                    url: '/userproduct/' + categoryId,
+                    type: 'GET',
+                    success: function(response) {
+                        $('#userproduct').html(response); // Update product list with retrieved products
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('Error fetching products:', error);
+                    }
+                });
+            });
+        });
 </script>
 
 </html>

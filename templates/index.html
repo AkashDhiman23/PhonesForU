@@ -11,18 +11,18 @@
 </head>
 <body>
     <style>
-        .image-container {
-            display: flex;
-            justify-content: center; /* Center horizontally */
-            align-items: center; /* Center vertically */
-            height: 300px; /* Adjust the height of the container */
-        }
-    
-        .fixed-size-image {
-            width: 200px; /* Adjust the width to your desired size */
-            height: auto; /* This ensures the image maintains its aspect ratio */
-        }
-    </style>
+    .image-container {
+        display: flex;
+        justify-content: center; /* Center horizontally */
+        align-items: center; /* Center vertically */
+        height: 300px; /* Adjust the height of the container */
+    }
+
+    .fixed-size-image {
+        width: 200px; /* Adjust the width to your desired size */
+        height: auto; /* This ensures the image maintains its aspect ratio */
+    }
+</style>
     <nav>
         <input type="checkbox" id="nav-toggle">
         <div class="logo"><img src="static/img/logo.png" alt="Logo"></div>
@@ -138,7 +138,7 @@
     <div class="row" id="userproduct">
         {% for product in random_products %}
         <div class="col-sm-6 col-md-4 col-lg-3 mb-4">
-            <!-- Make the card container clickable -->
+            <!-- Wrap the card container with an <a> tag -->
             <a href="productdescription.html?product_id={{ product.id }}" class="card-container">
                 <div class="card fixed-size-card">
                     <img src="{{ product.product_main_image }}" class="card-img-top fixed-size-image" alt="{{ product.product_title }}">
