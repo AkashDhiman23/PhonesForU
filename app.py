@@ -11,6 +11,8 @@ from model import ProductCategory, ProductList, db, User,MerchantUser
 from sqlalchemy.sql.expression import func
 
 from datetime import datetime as dt
+import json
+from fastapi.encoders import jsonable_encoder
 
 app = Flask(__name__, static_url_path='/static')
 
@@ -100,9 +102,14 @@ def login():
 
     user = User.query.filter_by(email_address=email).first()
     if not user or not check_password_hash(user.password_hash, password):
-        return jsonify({'message': 'Invalid email or password'}), 401
-
-    return jsonify({'message': 'Logged in successfully'}), 200
+        return jsonify({'message': 'Invalid email or password', 'success':False}), 401
+    else:
+        user = jsonable_encoder(user)
+        print(user)
+        print(type(user))
+        session["name"] = user["user_id"]
+        session["user_info"] = user
+        return jsonify({'message': 'Logged in successfully','success':True}), 200
 
 
 @app.route('/admin')
@@ -110,9 +117,9 @@ def admin():
     return render_template('admin.html')
 
 
-@app.route('/user')
+@app.route('/user-home')
 def user():
-    return render_template('user.html')
+    return render_template('user_home.html')
 
 
 @app.route('/signupmerchant', methods=['POST'])
@@ -229,8 +236,10 @@ def productCategory():
 
 @app.route('/logout')
 def logout():
-    session.pop('username', None)
-    return render_template('admin.html')
+    if session.get("name") is not None:
+        session.pop('name', None)
+        session.pop('user_info', None)
+    return redirect("/", code=302)
 
 @app.route('/edit/<int:category_id>')
 def edit_category(category_id):

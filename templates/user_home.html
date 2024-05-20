@@ -157,7 +157,7 @@ $('#login-form').submit(function(e) {
         error: function(xhr, status, error) {
             $('#login-message').text(xhr.responseJSON.message);
              // Redirect to home page upon successful login
-             window.location.href = '/admin';
+             window.location.href = '/user_home';
         }
         
     });
