@@ -13,30 +13,7 @@
     
 </head>
 <body>
-    <nav>
-        <input type="checkbox" id="nav-toggle">
-        <div class="logo"><img src="static/img/logo.png" alt="Logo"></div>
-        <ul class="links">
-            <li><a href="#" data-toggle="modal" data-target="#loginModal">Login</a></li>
-            <li><a href="#" data-toggle="modal" data-target="#signupModal">Signup</a></li>
-            <!-- Dropdown for categories -->
-            <li class="nav-item dropdown">
-                <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                    Categories
-                </a>
-                <div class="dropdown-menu" aria-labelledby="navbarDropdown">
-                    {% for category in categories %}
-                    <a class="dropdown-item category-link" href="/userproduct/{{ category.id }}">{{ category.product_category_name }}</a>
-                    {% endfor %}
-                </div>
-            </li>
-        </ul>
-        <label for="nav-toggle" class="icon-burger">
-            <div class="line"></div>
-            <div class="line"></div>
-            <div class="line"></div>
-        </label>
-    </nav>
+    {% include 'navbar.html' %}
     
     <div class="container-fluid mt-5">
         <div class="row">
