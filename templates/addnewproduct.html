@@ -6,14 +6,14 @@
     <title>Add New Product</title>
     <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.1.2/css/bootstrap.min.css">
-    
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/form.css') }}">
 </head>
 <body>
     {% include 'admin_navbar.html' %}
 
     <div class="container mt-5">
         <h2>Add New Product</h2>
-        <form action="/addnewproduct/{{product_category.id }}" enctype="multipart/form-data" method="post">
+        <form action="/addnewproduct/{{product_category.id }}" enctype="multipart/form-data" method="POST">
 
             <div class="form-group">
                 <label for="product_name">Product Name</label>

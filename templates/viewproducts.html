@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.1.2/css/bootstrap.min.css">
     
     <!-- Your custom CSS -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/form.css') }}">
    
 </head>
 <body>
@@ -58,11 +58,13 @@
             </table>
         </div>
         <!-- Button for adding a new product -->
-        <div class="row mt-4">
-            <div class="col-md-12 text-center"> <!-- Adjusted column size -->
-                <a href="/addnewproduct/{{ product_category_id }}" class="btn btn-success">Add New Product</a>
-            </div>
-        </div>
+        <!-- addnewproduct.html -->
+<div class="row mt-4">
+    <div class="col-md-12 text-center">
+        <a href="{{ url_for('add_new_product_route', category_id=product_category.id) }}" class="btn btn-success">Add New Product</a>
+    </div>
+</div>
+
         <div class="row mt-2"> <!-- Added an empty row for spacing -->
             <div class="col-md-12 text-right"> <!-- Adjusted column size -->
                 <a href="javascript:history.back()" class="btn btn-info">Back</a>

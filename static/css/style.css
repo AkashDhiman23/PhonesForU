@@ -496,16 +496,9 @@ div.h6,h6{
 .rebate{
     font-size: 0.9rem   ;
 }
-.btn.btn-primary{
-    background-color: #48b83e;
-    color: #fff;
-    border: 1px solid #48b83e;    
-    border-radius: 5px;
-    font-weight: 800;
-}
-.btn.btn-primary:hover{
-    background-color: #48b83ee8;
-}
+
+
+
 img{
     width: 192px;
     height: 132px;

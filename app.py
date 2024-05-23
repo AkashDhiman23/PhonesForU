@@ -1,7 +1,7 @@
 
 import os
 import psycopg2
-from flask import Flask, render_template, request,session, redirect, url_for, jsonify,flash
+from flask import Flask, render_template, request,session, redirect, url_for, jsonify,flash,send_from_directory
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import Session
 from flask_migrate import Migrate
@@ -53,6 +53,10 @@ def get_random_products(limit):
     return ProductList.query.order_by(func.random()).limit(limit).all()
 
 # Routes
+@app.route('/favicon.ico')
+def favicon():
+    return send_from_directory(directory='static', filename='favicon.ico')
+
 @app.route('/')
 def index():
     try:
@@ -144,6 +148,7 @@ def user_home():
     
     # Pass the user details and other necessary data to the template context
     return render_template('user_home.html', current_user=current_user, products=products, categories=categories)
+
 @app.route('/merchantsignup', methods=['GET'])
 def show_merchantsignup_form():
     return render_template('merchantsignup.html')

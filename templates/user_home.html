@@ -63,7 +63,7 @@
                     <!-- Product cards go here -->
                     {% for product in products %}
                     <div class="card product-card">
-                        <img class="card-img-top" src="{{ product.product_main_image }}" alt="{{ product.product_title }}">
+                        <img class="card-img-left" src="{{ product.product_main_image }}" alt="{{ product.product_title }}">
                         <div class="card-body">
                             <h6 class="font-weight-bold pt-1">{{ product.product_title }}</h6>
                             <p class="text-muted description">{{ product.product_description }}</p>
