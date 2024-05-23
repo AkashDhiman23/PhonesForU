@@ -179,6 +179,7 @@
                 data: $(this).serialize(),
                 success: function(response) {
                     $('#login-message').text(response.message);
+                    
                     if (response.success) {
                         window.location.href = '/user-home';
                     }

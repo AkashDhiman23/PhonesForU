@@ -5,13 +5,13 @@
 
 /* Custom CSS for product container */
 .product-container {
-    border: 2px solid #ccc; /* Add border */
-    border-radius: 12px; /* Add border radius for rounded corners */
-    padding: 30px; /* Add padding */
-    overflow: auto; /* Add scrollbars if content exceeds container height */
-    margin: 0 auto; /* Center the container horizontally */
-    display: flex; /* Use flexbox for layout */
-    flex-direction: column; /* Arrange items vertically */
+    border: 2px solid #ccc; 
+    border-radius: 12px; 
+    padding: 30px; 
+    overflow: auto;
+    margin: 0 auto; 
+    display: flex; 
+    flex-direction: column; 
 }
 
 /* Custom CSS for carousel images */

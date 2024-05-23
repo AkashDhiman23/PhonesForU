@@ -42,14 +42,13 @@
                             <button class="btn btn-danger" onclick="document.getElementById('delete_product_model_{{ product.id }}').style.display='block'">Delete</button>
                         </td>
                         <td> 
-                            
                             {% if product.product_main_image %}
                             <img src="{{ product.product_main_image }}" alt="Product Image"
                                  style="width: 45px; height: 45px"
                                  class="rounded-circle" onerror="imageError(this)">
-                        {% else %}
+                            {% else %}
                             <p>No image available</p>
-                        {% endif %}
+                            {% endif %}
                         </td>
                         <!-- Modal code -->
                         {% include 'productdelete_model.html' %}
@@ -60,10 +59,12 @@
         </div>
         <!-- Button for adding a new product -->
         <div class="row mt-4">
-            <div class="col-md-1 text-center">
-                <a href="/addnewproduct/{{ product_category.id }}" class="btn btn-success">Add New Product</a>
+            <div class="col-md-12 text-center"> <!-- Adjusted column size -->
+                <a href="/addnewproduct/{{ product_category_id }}" class="btn btn-success">Add New Product</a>
             </div>
-            <div class="col-md-11 text-right">
+        </div>
+        <div class="row mt-2"> <!-- Added an empty row for spacing -->
+            <div class="col-md-12 text-right"> <!-- Adjusted column size -->
                 <a href="javascript:history.back()" class="btn btn-info">Back</a>
             </div>
         </div>
@@ -80,12 +81,12 @@
         }
     </script>
 
-<script>
-    function imageError(imgElement) {
-        imgElement.onerror = null; // Prevent infinite loop in case placeholder image also fails
-        imgElement.src = "{{ url_for('static', filename='img/logo.png') }}"; // Provide a path to a placeholder image
-        // imgElement.alt = "Placeholder Image"; // Optional: Set an alternative text for the placeholder image
-    }
-</script>
+    <script>
+        function imageError(imgElement) {
+            imgElement.onerror = null; // Prevent infinite loop in case placeholder image also fails
+            imgElement.src = "{{ url_for('static', filename='img/logo.png') }}"; // Provide a path to a placeholder image
+            // imgElement.alt = "Placeholder Image"; // Optional: Set an alternative text for the placeholder image
+        }
+    </script>
 </body>
 </html>

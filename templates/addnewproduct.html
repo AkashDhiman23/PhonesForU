@@ -9,6 +9,8 @@
     
 </head>
 <body>
+    {% include 'admin_navbar.html' %}
+
     <div class="container mt-5">
         <h2>Add New Product</h2>
         <form action="/addnewproduct/{{product_category.id }}" enctype="multipart/form-data" method="post">

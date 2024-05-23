@@ -130,38 +130,69 @@ def admin():
 
 
 @app.route('/user-home')
-def user():
-    return render_template('user_home.html')
+def user_home():
+    # Retrieve the user details of the currently logged-in user
+    if 'user_id' in session:
+        user_id = session['user_id']
+        current_user = User.query.get(user_id)
+    else:
+        current_user = None
+    
+    # Fetch products and categories for display
+    products = ProductList.query.all()
+    categories = ProductCategory.query.all()
+    
+    # Pass the user details and other necessary data to the template context
+    return render_template('user_home.html', current_user=current_user, products=products, categories=categories)
+@app.route('/merchantsignup', methods=['GET'])
+def show_merchantsignup_form():
+    return render_template('merchantsignup.html')
 
 
 @app.route('/signupmerchant', methods=['POST'])
-def signupmerchant():
-    data = request.form
-    print("DATA IS:")
-    print(data)
-    existing_user = MerchantUser.query.filter_by(company_emailaddress=data['email']).first()
-    if existing_user:
-        return jsonify({'success': False, 'message': 'Email address is already registered.'}), 400
-    
-    password_hash = generate_password_hash(data['password'])
-    new_merchantuser = MerchantUser(
-        firstname=data['firstname'],
-        lastname=data['lastname'],
-        company_name=data['companyname'],
-        company_emailaddress=data['email'],
-        company_address=data['companyaddress'],
-        company_mobile=data['mobile'],
-        company_postcode=data['companypostcode'],
-        company_registrationno=data['companyregisterno'],
-        company_password_hash=password_hash
-    )
-    print(new_merchantuser)
-    db.session.add(new_merchantuser)
-    db.session.commit()
-    return jsonify({'success': True, 'message': 'Merchant signup successful!'})
+def process_merchantsignup_form():
+    try:
+        # Get form data from request
+        data = request.form
 
+        # Validate required fields
+        required_fields = ['firstname', 'lastname', 'companyregisterno', 'email', 'companyaddress', 'companypostcode', 'mobile', 'password']
+        for field in required_fields:
+            if field not in data or not data[field]:
+                return jsonify({'success': False, 'message': f'Missing or empty field: {field}'}), 400
+        
+        # Check if email address is already registered
+        existing_user = MerchantUser.query.filter_by(company_emailaddress=data['email']).first()
+        if existing_user:
+            return jsonify({'success': False, 'message': 'Email address is already registered.'}), 400
+        
+        # Generate password hash
+        password_hash = generate_password_hash(data['password'])
+        
+        # Create new MerchantUser object
+        new_merchantuser = MerchantUser(
+            firstname=data['firstname'],
+            lastname=data['lastname'],
+            company_name=data.get('companyname', ''),  # Optional field, use data.get to handle missing key
+            company_emailaddress=data['email'],
+            company_address=data['companyaddress'],
+            company_mobile=data['mobile'],
+            company_postcode=data['companypostcode'],
+            company_registrationno=data['companyregisterno'],
+            company_password_hash=password_hash
+        )
 
+        # Add new user to the database
+        db.session.add(new_merchantuser)
+        db.session.commit()  # Commit changes to the database
+        
+        # Return success response
+        return jsonify({'success': True, 'message': 'Merchant signup successful!'})
 
+    except Exception as e:
+        # Log error
+        app.logger.error(f"Error occurred during signup: {str(e)}")
+        return jsonify({'success': False, 'message': 'An error occurred while signing up.'}), 500
 
 @app.route('/loginmerchant', methods=['POST','GET'])
 def loginmerchant():
