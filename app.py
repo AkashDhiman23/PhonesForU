@@ -1,4 +1,3 @@
-
 import os
 import psycopg2
 from flask import Flask, render_template, request,session, redirect, url_for, jsonify,flash,send_from_directory
@@ -55,26 +54,15 @@ def get_random_products(limit):
 # Routes
 @app.route('/favicon.ico')
 def favicon():
-    return send_from_directory(directory='static', filename='favicon.ico')
+    return send_from_directory(os.path.join(app.root_path, 'static'), 'favicon.ico')
+
 
 @app.route('/')
 def index():
     try:
         random_products = get_random_products(6)
         categories = ProductCategory.query.all()
-        if not categories:
-            print("No categories found.")
-        else:
-            print(f"Categories found: {[category.product_category_name for category in categories]}")
-        if not random_products:
-            print("No random products found.")
-        else:
-            for product in random_products:
-                print(f"Random Product: {product.product_main_image}")
-        
-        # Render the index template with the fetched data
         return render_template('index.html', random_products=random_products, categories=categories)
-    
     except Exception as e:
         print(f"An error occurred: {e}")
         return render_template('error.html', message="An error occurred while loading the page.")
@@ -135,18 +123,15 @@ def admin():
 
 @app.route('/user-home')
 def user_home():
-    # Retrieve the user details of the currently logged-in user
     if 'user_id' in session:
         user_id = session['user_id']
         current_user = User.query.get(user_id)
     else:
         current_user = None
     
-    # Fetch products and categories for display
     products = ProductList.query.all()
     categories = ProductCategory.query.all()
     
-    # Pass the user details and other necessary data to the template context
     return render_template('user_home.html', current_user=current_user, products=products, categories=categories)
 
 @app.route('/merchantsignup', methods=['GET'])
@@ -423,6 +408,30 @@ def product_description():
         # Assuming you want to pass categories to the template as well
         categories = ProductCategory.query.all()
         return render_template('productdescription.html', product=product, categories=categories)
+    
+
+# user detail page 
+
+@app.route('/user-detail/<int:user_id>', methods=['GET', 'POST'])
+def user_detail(user_id):
+    # Retrieve the user details from the database
+    user = User.query.get_or_404(user_id)
+    
+    if request.method == 'POST':
+        # Retrieve form data
+        user.user_firstname = request.form['firstname']
+        user.user_lastname = request.form['lastname']
+        user.email_address = request.form['email']
+        user.mobile = request.form['mobile']
+        
+        # Commit changes to the database
+        db.session.commit()
+        flash('User details updated successfully!', 'success')
+        return redirect(url_for('user_detail', user_id=user_id))
+    
+    # Render the user_detail.html template with the user details
+    return render_template('user_details.html', user=user)
+
 
 
 if __name__ == '__main__':

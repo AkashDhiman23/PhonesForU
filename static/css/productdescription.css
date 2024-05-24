@@ -29,8 +29,8 @@
 
 /* Adjust product details width */
 .product-details {
-    width: 100%; /* Set width to fill the container */
-    padding-left: 20px; /* Add space between carousel and product details */
+    width: 100%;
+    padding-left: 20px;
 }
 
 /* Custom CSS for carousel navigation controls */

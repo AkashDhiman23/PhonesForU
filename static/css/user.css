@@ -90,110 +90,47 @@ nav .icon-burger .line {
 }
 
 /* Sidebar styling */
-
-.sidebar {
+.sidebar.left {
+    background-color: #0c0c0c;
+    color: #a9a8a8;
+    position: fixed;
+    top: 80px;
+    bottom: auto;
     width: 300px;
-    height: 100%;
-    background-color: #1d1c1c;
-    transition: all 0.5s ease-in-out;
+    padding: 20px;
+    z-index: 1000;
+    overflow-y: auto; /* Add scrollbar if content exceeds height */
 }
 
-.bg-default {
-    background-color: #222;
+/* Adjust sidebar width for smaller screens */
+@media (max-width: 991.98px) {
+    .sidebar.left {
+        width: 250px;
+    }
 }
 
-.sidebar ul {
-    list-style: auto;
-    color: #fff;
-    margin: 0px;
-    padding: auto;
+/* Adjust sidebar width and position for extra small screens */
+@media (max-width: 767.98px) {
+    .sidebar.left {
+        width: 100%;
+        top: 0;
+        bottom: 0;
+        left: -100%; /* Hide the sidebar off-screen */
+        padding-top: 60px; /* Adjust padding for top navigation */
+    }
 }
 
-.sidebar li a,
-.sidebar li a.collapsed.active {
-    display: var(white);
-    padding: 8px 12px;
-    color: #fff;
-    border-left: 0px solid #dedede;
-    text-decoration: none;
+/* Show sidebar when menu icon is clicked */
+.sidebar.left.active {
+    left: 0;
 }
 
-.sidebar li a.active {
-    background-color: #f5f4f4;
-    border-left: 5px solid #dedede;
-    transition: all 0.5s ease-in-out;
+/* Main content padding to accommodate sidebar */
+#products {
+    padding-left: 320px; /* Adjust based on sidebar width */
+    padding-top: 100px; /* Ensure content starts below navbar */
 }
 
-.sidebar li a:hover {
-    background-color: #f8f5f5 !important;
-}
-
-.sidebar li a i {
-    padding-right: 5px;
-}
-
-.sidebar ul li .sub-menu li a {
-    position: relative;
-}
-
-.sidebar ul li .sub-menu li a:before {
-    font-family: FontAwesome;
-    content: "\f105";
-    display: inline-block;
-    padding-left: 0px;
-    padding-right: 10px;
-    vertical-align: middle;
-    color: aliceblue;
-}
-
-.sidebar ul li .sub-menu li a:hover:after {
-    content: "";
-    position: absolute;
-    left: -5px;
-    top: 0;
-    width: 5px;
-    background-color: #edebeb;
-    height: 100%;
-}
-
-.sidebar ul li .sub-menu li a:hover {
-    background-color: #f7f6f6;
-    padding-left: 20px;
-    transition: all 0.5s ease-in-out;
-}
-
-.sub-menu {
-    border-left: 5px solid #dedede;
-}
-
-.sidebar li a .nav-label,
-.sidebar li a .nav-label+span {
-    transition: all 0.5s ease-in-out;
-}
-
-.sidebar.fliph li a.nav-label,
-.sidebar.fliph li a.nav-label+span {
-    display: none;
-    transition: all 0.5s ease-in-out;
-}
-
-.sidebar.fliph {
-    width: 42px;
-    transition: all 0.5s ease-in-out;
-}
-
-.sidebar.fliph li {
-    position: relative;
-}
-
-.sidebar.fliph .sub-menu {
-    position: absolute;
-    left: 39px;
-    top: 0;
-    background-color: #faf7f7;
-    width: 150px;
-    z-index: 100;
-}
 
 .user-panel {
     clear: left;
@@ -203,7 +140,7 @@ nav .icon-burger .line {
 
 .user-panel > .info,
 .user-panel > .info > a {
-    color: #fff;
+    color: #b2b1b1;
 }
 
 .user-panel > .info > p {
@@ -235,12 +172,14 @@ nav .icon-burger .line {
 /* Products Section styling */
 #products {
     padding: 50px 0; /* Adjust padding as needed */
+    padding-left: 400px;
 }
 
 .product-container {
     border: 2px solid #ccc; 
     border-radius: 12px; 
     padding: 30px; 
+    padding-left: auto;
     overflow: auto;
     margin: 0 auto; 
     display: flex; 
@@ -249,7 +188,7 @@ nav .icon-burger .line {
 
 .product-card {
     border: none;
-    width: 700px; /* Set the width of each product card */
+    width: 800px; /* Set the width of each product card */
     margin-bottom: 20px; /* Add some bottom margin for spacing */
     /* Add other styling properties for product card as needed */
 }
@@ -306,4 +245,11 @@ footer {
 
 ::-webkit-scrollbar-thumb:hover {
     background-color: #555;
+}
+
+@media (min-width: 992px) {
+    .col-lg-3 {
+        flex: 0 0 auto;
+        width: 25%;
+    }
 }
