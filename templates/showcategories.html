@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboardstyle.css') }}">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@200&display=swap" rel="stylesheet"> 
+   
+</head>
+<body>
+   
+{% include 'admin_navbar.html' %}
+    <div class="navbar">
+        <ul class="nav">
+            <li><a href="/categories">Add New Categories</a></li>
+            <li><a href="#">Display Categories</a></li> 
+            <li><a href="/categories">Orders</a></li>
+            <li><a href="#">My Account</a></li>
+            <li><a href="{{ url_for('logout_merchant') }}">Logout</a></li>
+        </ul>
+    </div>
+    
+    <div class="containers">
+        <div class="table-responsive">
+            <table class="table table-striped mt-5">
+                <thead class="bg-light">
+                    <h1>All Category  </h1>
+                    <tr>
+                        <th>ID</th>
+                        <th>Category Name</th>
+                        <th>Category Code</th>
+                        <th>Edit</th>
+                        <th>Delete</th>
+                        <th>View Products List</th> 
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for product_category in categories %}
+                    <tr>
+                        <td>{{ product_category.id }}</td>
+                        <td>{{ product_category.product_category_name }}</td>
+                        <td>{{ product_category.product_category_code }}</td>
+                        <td><a href="/edit/{{ product_category.id }}" class="btn btn-primary">Edit</a></td>
+                        <td>
+                            <button class="btn btn-danger" onclick="document.getElementById('delete_model_{{product_category.id}}').style.display='block'">Delete</button>
+                        </td>
+                        <td>
+                            <a href="/viewproducts/{{product_category.id}}" class="btn btn-info">View Products</a>
+                        </td>
+                        {% include 'delete_model.html' %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            <a href="javascript:history.back()" class="btn btn-info" style="background-color:black; color:white;">Go to last page</a>
+
+        </div>
+    </div>
+
+</body>
+</html>

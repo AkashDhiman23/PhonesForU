@@ -8,40 +8,20 @@
     <script src="//maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
     <script src="//code.jquery.com/jquery-1.11.1.min.js"></script>
     <link rel="stylesheet" href="static/css/user.css">
+    <!-- <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboardstyle.css') }}"> -->
 </head>
 <body>
     {% include 'user_navbar.html' %}    
 
     <div class="main d-flex">
-        <aside>
-            <div class="sidebar left">
-                <div class="container py-3" style="color: rgb(157, 156, 156);">
-                    <ul class="list-unstyled">
-                        <div class="container py-4">
-                            {% if current_user %}
-                                <a href="{{ url_for('user_detail', user_id=current_user) }}">User Details</a>
-                            {% else %}
-                                <li><a href="#" style="color: grey;"><h3>User Details</h3></a></li>
-                            {% endif %}
-                        </div>
-                        <div class="container py-4">
-                            <li><a href="" style="color: grey;"><h3>Change Password</h3></a></li>
-                        </div>
-                        <div class="container py-4">
-                            <li><a href="" style="color: grey;"><h3>My Orders</h3></a></li>
-                        </div>
-                    </ul>
-                    <!-- Logout button -->
-                {% if current_user %}
-                <div class="container py-3">
-                    <a class="btn btn-warning btn-block" href="/logout" role="button">Logout</a>
-                </div>
-                {% endif %}
-                </div>
-               
-                
-            </div>
-        </aside>
+        <div class="navbar">
+            <ul class="nav">
+                <li><a href ="#">Change Password</a></li>
+                <li><a href="#">My Details</a></li> 
+                <li><a href="#">My Orders</a></li>
+                <li><a href="/logout">Logout</a></li>
+            </ul>
+        </div>
     
         <section id="products" style="width: 90%;">
             <div class="container py-5">

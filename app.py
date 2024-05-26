@@ -209,20 +209,6 @@ def logout_merchant():
     return redirect("/admin", code=302)
 
 
-@app.route('/addnewcategory', methods=['GET','POST'])
-def product_category():
-    if request.method == 'POST':
-        category_name = request.form['product_category_name']
-        category_code = request.form['product_category_code']
-        
-        new_category = ProductCategory(product_category_name=category_name, product_category_code=category_code)
-        db.session.add(new_category)
-        db.session.commit()
-        
-        return redirect(url_for('categories'))  # Redirect to a page after adding category
-    
-    categories = ProductCategory.query.all()
-    return render_template('addnewcategory.html', categories=categories)
 
 
 @app.route('/delete-proceed/<id>/', methods=['POST'])
@@ -271,15 +257,44 @@ def delete_product(id):
 
     return jsonify({'output_msg': output_msg, 'success': success})
 
-@app.route('/categories')
+@app.route('/showcategories')
+def showcategories():
+    categories = ProductCategory.query.all()
+    return render_template('showcategories.html', categories=categories)
+
+@app.route('/categories', methods=['GET', 'POST'])
 def categories():
+    if request.method == 'POST':
+        category_name = request.form['product_category_name']
+        category_code = request.form['product_category_code']
+        
+        # Check if category name already exists
+        existing_category = ProductCategory.query.filter_by(product_category_name=category_name).first()
+        if existing_category:
+            flash('Category name already exists. Please use a different name.', 'error')
+            return redirect(url_for('categories'))
+        
+        new_category = ProductCategory(product_category_name=category_name, product_category_code=category_code)
+        try:
+            db.session.add(new_category)
+            db.session.commit()
+            flash('Category added successfully!', 'success')
+        except Exception as e:
+            db.session.rollback()
+            flash(f'An error occurred: {str(e)}', 'error')
+        
+        return redirect(url_for('categories'))  # Redirect to the categories page after adding a category
+    
     categories = ProductCategory.query.all()
     return render_template('categories.html', categories=categories)
 
-@app.route('/categories', methods=['GET'])
-def productCategory():
-    categories = ProductCategory.query.all()
-    return render_template('categories.html', categories=categories)
+
+
+
+# @app.route('/categories', methods=['GET'])
+# def productCategory():
+#     categories = ProductCategory.query.all()
+#     return render_template('categories.html', categories=categories)
 
 @app.route('/logout')
 def logout():
@@ -431,6 +446,7 @@ def user_detail(user_id):
     
     # Render the user_detail.html template with the user details
     return render_template('user_details.html', user=user)
+
 
 
 
