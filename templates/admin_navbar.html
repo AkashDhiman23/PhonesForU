@@ -1,9 +1,12 @@
 <link rel="stylesheet" href="static/css/form.css">
 <nav>
     <input type="checkbox" id="nav-toggle">
-    <div class="logo"><img src="{{ url_for('static', filename='img/black logo.png') }}" alt="Logo"></div>
+    <div class="logo">
+        <img src="{{ url_for('static', filename='img/black logo.png') }}" alt="Logo">
+    </div>
     <ul class="links">
         {% if session.get('merchant_name') %}
+        <li><a href="#">Welcome, {{ session.get('merchant_firstname') }} {{ session.get('merchant_lastname') }}</a></li>
         <li><a href="{{ url_for('logout_merchant') }}">Logout</a></li>
         {% elif session.get('name') %}
         <li><a href="{{ url_for('logout') }}">Logout</a></li>

@@ -3,36 +3,180 @@
 <head>
     <meta charset="UTF-8">
     <title>Edit Merchant User Details</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@200&display=swap" rel="stylesheet"> 
+    <!-- <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"> -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"> 
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.1.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/form.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboardstyle.css') }}">
 </head>
 <body>
-    <h1>Edit Merchant User Details</h1>
-    <form method="POST">
-        <label for="firstname">First Name:</label>
-        <input type="text" id="firstname" name="firstname" value="{{ merchant_user.firstname }}" required><br>
+
+    {% include 'admin_navbar.html' %}
+
+    <div class="navbar">
+        <ul class="nav">
+            <li><a href ="/categories">Add New Categories</a></li>
+            <li><a href="{{ url_for('showcategories') }}">Display Categories</a></li> 
+            <li><a href="#">Orders</a></li>
+            <li><a href="{{ url_for('edit_merchant', company_id=session.get('merchant_name')) }}">My Account</a></li>
+            <li><a href="{{ url_for('logout_merchant') }}">Logout</a></li>
+        </ul>
+    </div>
+
+    <div class="container" >
+        <form id="editForm" action="{{ url_for('edit_merchant', company_id=session.get('merchant_name')) }}" enctype="multipart/form-data" method="POST">
+    
+            <h1>Account Details</h1>
+            <div class="row" style="margin-top:30px;">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="firstname">First Name:</label>
+                        <input type="text" class="form-control" id="firstname" name="firstname" value="{{ merchant_user.firstname }}" disabled required>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="lastname">Last Name:</label>
+                        <input type="text" class="form-control" id="lastname" name="lastname" value="{{ merchant_user.lastname }}" disabled required><br>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="company_name">Company Name:</label>
+                        <input type="text" class="form-control"  id="company_name" name="company_name" value="{{ merchant_user.company_name }}" disabled>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="company_emailaddress">Email Address:</label>
+                        <input type="email" class="form-control"  id="company_emailaddress" name="company_emailaddress" value="{{ merchant_user.company_emailaddress }}" disabled required>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="company_address">Address:</label>
+                        <input type="text" class="form-control"  id="company_address" name="company_address" value="{{ merchant_user.company_address }}" disabled required>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="company_mobile">Mobile:</label>
+                        <input type="text" class="form-control" id="company_mobile" name="company_mobile" value="{{ merchant_user.company_mobile }}" disabled required>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="company_postcode">Postcode:</label>
+                        <input type="text" class="form-control" id="company_postcode" name="company_postcode" value="{{ merchant_user.company_postcode }}" disabled required>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="company_registrationno">Registration Number:</label>
+                        <input type="text" class="form-control" id="company_registrationno" name="company_registrationno" value="{{ merchant_user.company_registrationno }}" disabled required>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Save Changes button -->
+            <button type="submit" class="btn btn-primary" id="saveButton">Save Changes</button>
         
-        <label for="lastname">Last Name:</label>
-        <input type="text" id="lastname" name="lastname" value="{{ merchant_user.lastname }}" required><br>
+            <!-- Edit button -->
+            <button type="button" class="btn btn-secondary" id="editButton">Edit</button>
+        </form>
+    </div>
 
-        <label for="company_name">Company Name:</label>
-        <input type="text" id="company_name" name="company_name" value="{{ merchant_user.company_name }}"><br>
 
-        <label for="company_emailaddress">Email Address:</label>
-        <input type="email" id="company_emailaddress" name="company_emailaddress" value="{{ merchant_user.company_emailaddress }}" required><br>
+    <!-- Success message modal -->
+    <div class="modal fade" id="successModal" tabindex="-1" role="dialog" aria-labelledby="successModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="successModalLabel">Success</h5>
+              <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+              </button>
+            </div>
+            <div class="modal-body">
+              Your changes have been saved successfully.
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <script>
+        // Function to toggle input field disable/enable
+        function toggleInputs(enable) {
+            var inputs = document.querySelectorAll('input[type="text"], input[type="email"]');
+            inputs.forEach(function(input) {
+                input.disabled = !enable;
+            });
+        }
 
-        <label for="company_address">Address:</label>
-        <input type="text" id="company_address" name="company_address" value="{{ merchant_user.company_address }}" required><br>
+        // Add event listener to the "Edit" button
+        document.getElementById('editButton').addEventListener('click', function() {
+            toggleInputs(true); 
+        });
 
-        <label for="company_mobile">Mobile:</label>
-        <input type="text" id="company_mobile" name="company_mobile" value="{{ merchant_user.company_mobile }}" required><br>
+        // Show success message after form submission
+        $('#editForm').on('submit', function(event) {
+            event.preventDefault(); // Prevent default form submission
+            
+            // Submit the form via AJAX
+            $.ajax({
+                type: 'POST',
+                url: $(this).attr('action'),
+                data: new FormData(this),
+                processData: false,
+                contentType: false,
+                success: function(response) {
+                    // Show success modal
+                    $('#successModal').modal('show');
+                    // Disable input fields after successful submission
+                    toggleInputs(false);
+                },
+                error: function(response) {
+                    alert('An error occurred. Please try again.');
+                }
+            });
+        });
+    </script>
+      <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
+    <!-- <script>
+        // Function to toggle input field disable/enable
+        function toggleInputs(enable) {
+            var inputs = document.querySelectorAll('input[type="text"], input[type="email"]');
+            inputs.forEach(function(input) {
+                input.disabled = !enable;
+            });
+        }
 
-        <label for="company_postcode">Postcode:</label>
-        <input type="text" id="company_postcode" name="company_postcode" value="{{ merchant_user.company_postcode }}" required><br>
+        // Add event listener to the "Edit" button
+        document.getElementById('editButton').addEventListener('click', function() {
+            toggleInputs(true); 
+            
+        });
+    </script> -->
+    </body>
+    </html>
 
-        <label for="company_registrationno">Registration Number:</label>
-        <input type="text" id="company_registrationno" name="company_registrationno" value="{{ merchant_user.company_registrationno }}" required><br>
-        
-        <button type="submit">Save Changes</button>
-    </form>
-</body>
-</html>
+
+
+
+
+
+
+
+
+

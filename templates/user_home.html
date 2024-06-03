@@ -4,11 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NZ Tech</title>
-    <link href="//maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" rel="stylesheet">
-    <script src="//maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
-    <script src="//code.jquery.com/jquery-1.11.1.min.js"></script>
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css">
+    <!-- Font Awesome CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
     <link rel="stylesheet" href="static/css/user.css">
-    <!-- <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboardstyle.css') }}"> -->
+   
 </head>
 <body>
     {% include 'user_navbar.html' %}    
@@ -16,58 +17,49 @@
     <div class="main d-flex">
         <div class="navbar">
             <ul class="nav">
-                <li><a href ="#">Change Password</a></li>
-                <li><a href="#">My Details</a></li> 
+                <li><a href="{{ url_for('change_password', user_id=session.get('name')) }}">Change Password</a></li>
+                <li><a href="{{ url_for('user_details', user_id=session.get('name')) }}">My Details</a></li> 
                 <li><a href="#">My Orders</a></li>
                 <li><a href="/logout">Logout</a></li>
             </ul>
         </div>
+
+        
     
-        <section id="products" style="width: 90%;">
-            <div class="container py-5">
-                <div class="product-container">
-                    <!-- Product cards go here -->
-                    {% for product in products %}
-                    <div class="card product-card mb-4">
-                        <div class="row no-gutters">
-                            <div class="col-md-3 mt-1">
-                                <img class="img-fluid img-responsive rounded product-image" src="{{ product.product_main_image }}" alt="{{ product.product_title }}">
-                            </div>
-                            <div class="col-md-6 mt-1">
-                                <div class="card-body">
-                                    <h5>{{ product.product_title }}</h5>
-                                    <div class="d-flex flex-row">
-                                        <div class="ratings mr-2" >
-                                            {% for _ in range(4) %} <!-- Adjust number for star ratings -->
-                                            <i class="fa fa-star" ></i>
-                                            {% endfor %}
-                                        </div>
-                                        <span>{{ product.reviews_count }}</span> <!-- Adjust according to your product model -->
-                                    </div>
-                                    
-                                    <p class="text-justify text-truncate para mb-0">{{ product.product_description }}<br><br></p>
-                                </div>
-                            </div>
-                            <div class="align-items-center align-content-center col-md-3 border-left mt-1" >
-                                <div class="d-flex flex-row align-items-center">
-                                    <h4 class="mr-1">{{ product.product_price }}NZD</h4>
-                                    {% if product.rebate %}
-                                    <span class="strike-text">{{ product.rebate }}</span>
-                                    {% endif %}
-                                </div>
-                                <h6 class="text-success">Free shipping</h6>
-                                <div class="d-flex flex-column mt-4">
-                                    <a href="/productdescription.html?product_id={{ product.id }}" class="btn btn-warning btn-sm">Details</a>
-                                    <button class="btn btn-outline-warning btn-sm mt-2" type="button">Buy Now</button>
-                                </div>
-                            </div>
+    </div>
+    <div class="container d-flex justify-content-center mt-50 mb-50" style="margin-left:400px ;  padding:20px 10px;" >
+        <div class="row" >
+            <div class="col-md-10">
+                {% for product in products %}
+                <div class="card card-body mb-4">
+                    <div class="media align-items-center align-items-lg-start text-center text-lg-left flex-column flex-lg-row">
+                        <div class="mr-2 mb-3 mb-lg-0">
+                            <img src="{{ product.product_main_image }}" width="150" height="150" alt="{{ product.product_title }}">
+                        </div>
+                        <div class="media-body">
+                            <h6 class="media-title font-weight-semibold">
+                                <a href="#" data-abc="true">{{ product.product_title }}</a>
+                            </h6>
+                            <ul class="list-inline list-inline-dotted mb-3 mb-lg-2">
+                                <li class="list-inline-item"><a href="#" class="text-muted" data-abc="true">Phones</a></li>
+                                <li class="list-inline-item"><a href="#" class="text-muted" data-abc="true">Mobiles</a></li>
+                            </ul>
+                            <p class="mb-3">{{ product.product_description }}</p>
+                            <ul class="list-inline list-inline-dotted mb-0">
+                                <li class="list-inline-item">All items from <a href="#" data-abc="true">Mobile point</a></li>
+                            </ul>
+                        </div>
+                        <div class="mt-3 mt-lg-0 ml-lg-3 text-center">
+                            <h3 class="mb-0 font-weight-semibold">{{ product.product_price }}NZD</h3>
+                            <button type="button" class="btn btn-warning mt-4 text-white"><i class="fa fa-cart-plus mr-2"></i> Add to cart</button>
                         </div>
                     </div>
-                    {% endfor %}
                 </div>
+                {% endfor %}
             </div>
-        </section>
+        </div>
     </div>
+
 
     <!-- Footer -->
     <footer class="bg-black text-white mt-5">
@@ -152,5 +144,10 @@
             });
         });
     </script>
+
+    <!-- jQuery -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+    <!-- Bootstrap Bundle JS -->
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

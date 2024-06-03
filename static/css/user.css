@@ -14,11 +14,12 @@ html, body {
 
 /* The footer should stick to the bottom */
 footer {
-    flex-shrink: 0;
+   
+   
     width: 100%;
     background-color: #000; /* Set background color */
     color: #fff; /* Set text color */
-    padding: 1rem 0; /* Add some padding */
+    padding: 10px; /* Add some padding */
 }
 
 /* Footer links */
@@ -141,13 +142,14 @@ body {
     flex-shrink: 0;
     width: 300px;
     background-color: #333;
-    height: 100%; /* Adjust to full height of the page */
+    /* height: 100%; Adjust to full height of the page */
     position: fixed;
-    top: 80px; /* Start below the navbar */
+    top: 100px; /* Start below the navbar */
     left: 0;
     display: flex;
     flex-direction: column;
     align-items: center;
+    padding:20px 20px;
 }
 
 .navbar .nav {

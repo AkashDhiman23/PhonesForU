@@ -121,6 +121,8 @@ def admin():
     return render_template('admin.html')
 
 
+
+
 @app.route('/user-home')
 def user_home():
     if 'user_id' in session:
@@ -183,8 +185,8 @@ def process_merchantsignup_form():
         # Log error
         app.logger.error(f"Error occurred during signup: {str(e)}")
         return jsonify({'success': False, 'message': 'An error occurred while signing up.'}), 500
-
-@app.route('/loginmerchant', methods=['POST','GET'])
+    
+@app.route('/loginmerchant', methods=['POST', 'GET'])
 def loginmerchant():
     try:
         email = request.form['email']
@@ -199,7 +201,10 @@ def loginmerchant():
         userMerchant = jsonable_encoder(userMerchant)
         session["merchant_name"] = userMerchant["company_id"]
         session["merchant_user_info"] = userMerchant
+        session["merchant_firstname"] = userMerchant["firstname"]
+        session["merchant_lastname"] = userMerchant["lastname"]
         return jsonify({'message': 'Logged in successfully', 'success': True}), 200
+
     
 @app.route('/logoutmerchant')
 def logout_merchant():
@@ -262,15 +267,22 @@ def showcategories():
     categories = ProductCategory.query.all()
     return render_template('showcategories.html', categories=categories)
 
+
+
+
+
 @app.route('/categories', methods=['GET', 'POST'])
 def categories():
+    merchant_name = session.get('merchant_name')
+    merchant_password = session.get('merchant_password')
+    
     if request.method == 'POST':
         category_name = request.form['product_category_name']
         category_code = request.form['product_category_code']
         
         # Check if category name already exists
         existing_category = ProductCategory.query.filter_by(product_category_name=category_name).first()
-        if existing_category:
+        if (existing_category):
             flash('Category name already exists. Please use a different name.', 'error')
             return redirect(url_for('categories'))
         
@@ -286,7 +298,9 @@ def categories():
         return redirect(url_for('categories'))  # Redirect to the categories page after adding a category
     
     categories = ProductCategory.query.all()
-    return render_template('categories.html', categories=categories)
+    return render_template('categories.html', categories=categories, merchant_name=merchant_name, merchant_password=merchant_password)
+
+
 
 
 
@@ -424,30 +438,119 @@ def product_description():
         categories = ProductCategory.query.all()
         return render_template('productdescription.html', product=product, categories=categories)
     
-
-# user detail page 
-
-@app.route('/user-detail/<int:user_id>', methods=['GET', 'POST'])
-def user_detail(user_id):
-    # Retrieve the user details from the database
+@app.route('/user/<int:user_id>', methods=['GET', 'POST'])
+def user_details(user_id):
     user = User.query.get_or_404(user_id)
     
     if request.method == 'POST':
-        # Retrieve form data
         user.user_firstname = request.form['firstname']
         user.user_lastname = request.form['lastname']
         user.email_address = request.form['email']
         user.mobile = request.form['mobile']
+       
         
-        # Commit changes to the database
+        
         db.session.commit()
         flash('User details updated successfully!', 'success')
-        return redirect(url_for('user_detail', user_id=user_id))
+        return redirect(url_for('user_details', user_id=user_id))
     
-    # Render the user_detail.html template with the user details
     return render_template('user_details.html', user=user)
 
+@app.route('/change_password/<int:user_id>', methods=['GET', 'POST'])
+def change_password(user_id):
+    user = User.query.get_or_404(user_id)
+    
+    if request.method == 'POST':
+        new_password = request.form.get('new_password')
+        confirm_password = request.form.get('confirm_password')
+        
+        # Input validation
+        if not new_password or not confirm_password:
+            flash('All fields are required.', 'error')
+            return redirect(url_for('change_password', user_id=user_id))
+        
+        # Check if new password and confirm password match
+        if new_password != confirm_password:
+            flash('New password and confirm password do not match.', 'error')
+            return redirect(url_for('change_password', user_id=user_id))
+        
+        # Update the user's password hash directly in the database
+        hashed_password = generate_password_hash(new_password)
+        db.session.query(User).filter(User.user_id == user_id).update({User.password_hash: hashed_password})
+        db.session.commit()  # Commit the changes to the database
+        
+        flash('Password updated successfully.', 'success')
+        return redirect(url_for('change_password', user_id=user_id))
+    
+    return render_template('user_changepassword.html', user=user)
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+@app.route('/editmerchant/<int:company_id>', methods=['GET', 'POST'])
+def edit_merchant(company_id):
+    print("Company ID from URL:", company_id)
+    try:
+        # Find merchant user by company ID
+        merchant_user = MerchantUser.query.get(company_id)
+        if not merchant_user:
+            return jsonify({'success': False, 'message': 'Merchant user not found.'}), 404
+        
+        if request.method == 'POST':
+            # Get form data from request
+            data = request.form
+
+            print("Form Data:", data)
+            # Validate required fields
+            required_fields = ['firstname', 'lastname', 'company_name', 'company_emailaddress', 'company_address', 'company_mobile', 'company_postcode', 'company_registrationno']
+            for field in required_fields:
+                if field not in data or not data[field]:
+                    return jsonify({'success': False, 'message': f'Missing or empty field: {field}'}), 400
+
+            # Update merchant user details
+            merchant_user.firstname = data['firstname']
+            merchant_user.lastname = data['lastname']
+            merchant_user.company_name = data['company_name']
+            merchant_user.company_emailaddress = data['company_emailaddress']
+            merchant_user.company_address = data['company_address']
+            merchant_user.company_mobile = data['company_mobile']
+            merchant_user.company_postcode = data['company_postcode']
+            merchant_user.company_registrationno = data['company_registrationno']
+
+            # Commit changes to the database
+            db.session.commit()
+
+            flash('Merchant details updated successfully!', 'success')
+            # Redirect back to the edit page after successful update
+            return redirect(url_for('edit_merchant', company_id=company_id))
+        
+        # Render the template with merchant details for GET request
+        return render_template('merchant_user_details.html', merchant_user=merchant_user)
+
+    except Exception as e:
+        # Log error
+        app.logger.error(f"Error occurred during merchant details update: {str(e)}")
+        flash('An error occurred while updating merchant details.', 'error')
+        return redirect(url_for('edit_merchant', company_id=company_id))
 
 
 if __name__ == '__main__':
