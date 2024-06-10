@@ -6,9 +6,9 @@ from sqlalchemy.orm import Session
 from flask_migrate import Migrate
 from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
-from model import ProductCategory, ProductList, db, User,MerchantUser
+from model import ProductCategory, ProductList, db, User,MerchantUser,Cart
 from sqlalchemy.sql.expression import func
-
+from sqlalchemy import Column, Integer, ForeignKey
 from datetime import datetime as dt
 import json
 from fastapi.encoders import jsonable_encoder
@@ -62,7 +62,9 @@ def index():
     try:
         random_products = get_random_products(6)
         categories = ProductCategory.query.all()
-        return render_template('index.html', random_products=random_products, categories=categories)
+        # Ensure cart is defined
+        cart = session.get('cart', [])
+        return render_template('index.html', random_products=random_products, categories=categories, cart=cart)
     except Exception as e:
         print(f"An error occurred: {e}")
         return render_template('error.html', message="An error occurred while loading the page.")
@@ -99,21 +101,25 @@ def signup():
 
     return jsonify({'success': True, 'message': 'Signup successful!'})
 
-@app.route('/login', methods=['GET','POST'])
+@app.route('/login', methods=['GET', 'POST'])
 def login():
     email = request.form['email']
     password = request.form['password']
 
     user = User.query.filter_by(email_address=email).first()
     if not user or not check_password_hash(user.password_hash, password):
-        return jsonify({'message': 'Invalid email or password', 'success':False}), 401
+        return jsonify({'message': 'Invalid email or password', 'success': False}), 401
     else:
         user = jsonable_encoder(user)
-        print(user)
-        print(type(user))
         session["name"] = user["user_id"]
         session["user_info"] = user
-        return jsonify({'message': 'Logged in successfully','success':True}), 200
+        
+        # Load cart from database
+        cart_items = Cart.query.filter_by(user_id=user["user_id"]).all()
+        cart = [{'product_id': item.product_id, 'quantity': item.quantity} for item in cart_items]
+        session['cart'] = cart
+        
+        return jsonify({'message': 'Logged in successfully', 'success': True}), 200
 
 
 @app.route('/admin')
@@ -122,19 +128,20 @@ def admin():
 
 
 
-
-@app.route('/user-home')
+@app.route('/user-home', methods=['GET'])
 def user_home():
     if 'user_id' in session:
         user_id = session['user_id']
         current_user = User.query.get(user_id)
     else:
         current_user = None
-    
+
     products = ProductList.query.all()
     categories = ProductCategory.query.all()
-    
-    return render_template('user_home.html', current_user=current_user, products=products, categories=categories)
+    # Ensure cart is defined
+    cart = session.get('cart', [])
+
+    return render_template('user_home.html', current_user=current_user, products=products, categories=categories, cart=cart)
 
 @app.route('/merchantsignup', methods=['GET'])
 def show_merchantsignup_form():
@@ -271,6 +278,7 @@ def showcategories():
 
 
 
+
 @app.route('/categories', methods=['GET', 'POST'])
 def categories():
     merchant_name = session.get('merchant_name')
@@ -312,9 +320,26 @@ def categories():
 
 @app.route('/logout')
 def logout():
-    if session.get("name") is not None:
+    if 'name' in session:
+        user_id = session['name']
+        cart = session.get('cart', [])
+        
+        # Clear existing cart items for the user
+        Cart.query.filter_by(user_id=user_id).delete()
+        
+        # Add current cart items to the database
+        for item in cart:
+            new_cart_item = Cart(user_id=user_id, product_id=item['product_id'], quantity=item['quantity'])
+            db.session.add(new_cart_item)
+        
+        db.session.commit()
+        
+        # Clear session
         session.pop('name', None)
         session.pop('user_info', None)
+        session.pop('cart', None)
+        session.pop('cart_quantities', None)
+    
     return redirect("/", code=302)
 
 @app.route('/edit/<int:category_id>')
@@ -383,6 +408,98 @@ def add_new_product_route(category_id):
             return render_template('addnewproduct.html', product_category=category, error_message="An error occurred. Please try again.")
     else:
         return render_template('addnewproduct.html', product_category=category)
+
+@app.route('/add_to_cart/<int:product_id>', methods=['GET'])
+def add_to_cart(product_id):
+    if 'name' not in session:
+        return redirect(url_for('login'))
+    
+    user_id = session['name']
+    cart = session.get('cart', [])
+    
+    # Check if the product_id is already in the cart
+    index = next((i for i, item in enumerate(cart) if item['product_id'] == product_id), None)
+    
+    if index is not None:
+        # If the product is already in the cart, increment its quantity
+        cart[index]['quantity'] += 1
+        # Update the quantity in the database
+        cart_item = Cart.query.filter_by(user_id=user_id, product_id=product_id).first()
+        cart_item.quantity = cart[index]['quantity']
+    else:
+        # If the product is not in the cart, add it with quantity 1
+        cart.append({'product_id': product_id, 'quantity': 1})
+        # Add new cart item to the database
+        new_cart_item = Cart(user_id=user_id, product_id=product_id, quantity=1)
+        db.session.add(new_cart_item)
+    
+    db.session.commit()
+    session['cart'] = cart
+    
+    return redirect(url_for('user_home'))
+
+
+@app.route('/remove_from_cart/<int:product_id>', methods=['GET'])
+def remove_from_cart(product_id):
+    if 'name' not in session:
+        return redirect(url_for('login'))
+
+    user_id = session['name']
+    cart = session.get('cart', [])
+
+    index = next((i for i, item in enumerate(cart) if item['product_id'] == product_id), None)
+
+    if index is not None:
+        cart.pop(index)
+        # Remove the item from the database
+        Cart.query.filter_by(user_id=user_id, product_id=product_id).delete()
+
+        db.session.commit()
+        session['cart'] = cart
+
+    return redirect(url_for('user_home'))
+
+@app.route('/clear_cart', methods=['POST'])
+def clear_cart():
+    if 'name' not in session:
+        return redirect(url_for('login'))
+    
+    user_id = session['name']
+    
+    # Clear cart in the database
+    Cart.query.filter_by(user_id=user_id).delete()
+    db.session.commit()
+    
+    # Clear cart in the session
+    session.pop('cart', None)
+    session.pop('cart_quantities', None)
+    
+    return jsonify(success=True)
+
+
+@app.route('/update_cart_quantity/<int:product_id>/<int:quantity>', methods=['GET'])
+def update_cart_quantity(product_id, quantity):
+    if 'name' not in session:
+        return redirect(url_for('login'))
+
+    user_id = session['name']
+    cart = session.get('cart', [])
+
+    # Find the item in the cart
+    index = next((i for i, item in enumerate(cart) if item['product_id'] == product_id), None)
+
+    if index is not None:
+        # Update the quantity in the cart
+        cart[index]['quantity'] = quantity
+
+        # Update the quantity in the database
+        cart_item = Cart.query.filter_by(user_id=user_id, product_id=product_id).first()
+        cart_item.quantity = quantity
+
+        db.session.commit()
+        session['cart'] = cart
+
+    return redirect(url_for('user_home'))
 
 
 @app.route('/viewproducts/<int:category_id>', methods=['GET', 'POST'])
@@ -483,27 +600,6 @@ def change_password(user_id):
         return redirect(url_for('change_password', user_id=user_id))
     
     return render_template('user_changepassword.html', user=user)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 @app.route('/editmerchant/<int:company_id>', methods=['GET', 'POST'])

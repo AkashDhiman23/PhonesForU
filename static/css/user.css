@@ -258,3 +258,7 @@ body {
 .dropdown-menu .dropdown-item:hover {
     background-color: #f8f9fa !important;
 }
+
+.dropdown-menu.dropdown-menu-right {
+    width: 350px; /* Adjust the width as needed */
+}
