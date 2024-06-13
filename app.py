@@ -15,6 +15,9 @@ from fastapi.encoders import jsonable_encoder
 
 app = Flask(__name__)
 
+app.config['SESSION_COOKIE_SECURE'] = True
+app.config['SESSION_COOKIE_HTTPONLY'] = True
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 app.config['SQLALCHEMY_DATABASE_URI'] = "postgresql://postgres:dhiman223@localhost:5432/ecommercedb"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config['STATIC_FOLDER'] = 'static'
@@ -50,6 +53,15 @@ def get_file_extension(filename):
 
 def get_random_products(limit):
     return ProductList.query.order_by(func.random()).limit(limit).all()
+
+
+def calculate_total_price(cart):
+    total_price = 0
+    for item in cart:
+        product = item.get('product')
+        if product:
+            total_price += product.get('price', 0) * item.get('quantity', 0)
+    return total_price
 
 # Routes
 @app.route('/favicon.ico')
@@ -101,7 +113,7 @@ def signup():
 
     return jsonify({'success': True, 'message': 'Signup successful!'})
 
-@app.route('/login', methods=['GET', 'POST'])
+@app.route('/login', methods=['POST'])
 def login():
     email = request.form['email']
     password = request.form['password']
@@ -110,16 +122,16 @@ def login():
     if not user or not check_password_hash(user.password_hash, password):
         return jsonify({'message': 'Invalid email or password', 'success': False}), 401
     else:
-        user = jsonable_encoder(user)
-        session["name"] = user["user_id"]
-        session["user_info"] = user
+        session["name"] = user.user_id  # Set the user's ID in session
+        session["user_info"] = jsonable_encoder(user)  # Store user info in session if needed
         
         # Load cart from database
-        cart_items = Cart.query.filter_by(user_id=user["user_id"]).all()
+        cart_items = Cart.query.filter_by(user_id=user.user_id).all()
         cart = [{'product_id': item.product_id, 'quantity': item.quantity} for item in cart_items]
         session['cart'] = cart
         
         return jsonify({'message': 'Logged in successfully', 'success': True}), 200
+
 
 
 @app.route('/admin')
@@ -442,7 +454,7 @@ def add_to_cart(product_id):
 @app.route('/remove_from_cart/<int:product_id>', methods=['GET'])
 def remove_from_cart(product_id):
     if 'name' not in session:
-        return redirect(url_for('login'))
+        return jsonify(success=False, message='User not logged in')
 
     user_id = session['name']
     cart = session.get('cart', [])
@@ -457,7 +469,9 @@ def remove_from_cart(product_id):
         db.session.commit()
         session['cart'] = cart
 
-    return redirect(url_for('user_home'))
+        return redirect(url_for('user_home'))
+
+    return jsonify(success=False, message='Product not found in cart')
 
 @app.route('/clear_cart', methods=['POST'])
 def clear_cart():
@@ -477,10 +491,10 @@ def clear_cart():
     return jsonify(success=True)
 
 
-@app.route('/update_cart_quantity/<int:product_id>/<int:quantity>', methods=['GET'])
-def update_cart_quantity(product_id, quantity):
+@app.route('/update_cart_quantity/<int:product_id>/<string:action>', methods=['GET'])
+def update_cart_quantity(product_id, action):
     if 'name' not in session:
-        return redirect(url_for('login'))
+        return jsonify(success=False, message='User not logged in')
 
     user_id = session['name']
     cart = session.get('cart', [])
@@ -489,17 +503,129 @@ def update_cart_quantity(product_id, quantity):
     index = next((i for i, item in enumerate(cart) if item['product_id'] == product_id), None)
 
     if index is not None:
-        # Update the quantity in the cart
-        cart[index]['quantity'] = quantity
-
+        if action == 'increase':
+            cart[index]['quantity'] += 1
+        elif action == 'decrease' and cart[index]['quantity'] > 1:
+            cart[index]['quantity'] -= 1
+        
         # Update the quantity in the database
         cart_item = Cart.query.filter_by(user_id=user_id, product_id=product_id).first()
-        cart_item.quantity = quantity
+        cart_item.quantity = cart[index]['quantity']
 
         db.session.commit()
         session['cart'] = cart
 
-    return redirect(url_for('user_home'))
+        return redirect(url_for('user_home'))
+
+    return jsonify(success=False, message='Product not found in cart')
+
+@app.route('/user-cart', methods=['GET', 'POST'])
+def user_cart():
+    if 'name' not in session:
+        return redirect(url_for('login'))
+    
+    user_id = session['name']
+    
+    cart_items = Cart.query.filter_by(user_id=user_id).all()
+    cart = []
+    
+    # Iterate over cart items and construct the cart data
+    for cart_item in cart_items:
+        product = {
+            'cart_item_id': cart_item.cart_item_id,
+            'product_id': cart_item.product_id,
+            'product_name': cart_item.product.product_name,
+            'product_main_image': cart_item.product.product_main_image,
+            'product_price': cart_item.product.product_price,
+            'quantity': cart_item.quantity,
+            'item_total_price': cart_item.product.product_price * cart_item.quantity
+        }
+        cart.append(product)
+    
+    # Calculate total quantity and total price based on cart data
+    total_quantity = sum(item['quantity'] for item in cart)
+    total_price = sum(item['item_total_price'] for item in cart)
+    
+    return render_template('user_cart.html', cart=cart, total_quantity=total_quantity, total_price=total_price)
+
+
+@app.route('/update-cart-item', methods=['POST'])
+def update_cart_item():
+    if 'user_id' not in session:
+        return jsonify({'error': 'User not logged in'}), 401
+
+    data = request.get_json()
+    cart_item_id = data.get('cart_item_id')
+    new_quantity = data.get('quantity')
+
+    # Retrieve the cart item from the database
+    cart_item = Cart.query.filter_by(cart_item_id=cart_item_id, user_id=session['user_id']).first()
+    if not cart_item:
+        return jsonify({'error': 'Cart item not found'}), 404
+
+    # Update the quantity of the cart item
+    cart_item.quantity = new_quantity
+    db.session.commit()
+
+    # Calculate new item total price
+    new_item_total_price = cart_item.product.product_price * new_quantity
+
+    return jsonify({
+        'message': 'Cart item quantity updated successfully',
+        'new_item_total_price': new_item_total_price
+    }), 200
+
+
+
+@app.route('/checkout')
+def checkout():
+    # Check if user is logged in
+    if 'name' not in session:
+        return redirect(url_for('login'))  # Redirect to login page if user is not logged in
+    
+    user_id = session['name']
+    user = User.query.get(user_id)
+
+    if not user:
+        return "User not found"  # Handle case where user does not exist (optional)
+
+    # Retrieve cart items for the current user
+    cart_items = Cart.query.filter_by(user_id=user_id).all()
+
+    # Calculate total price from cart items
+    total_price = sum(item.product.product_price * item.quantity if item.product else 0 for item in cart_items)
+
+    return render_template('checkout.html', user=user, cart_items=cart_items, total_price=total_price)
+
+@app.route('/place-order', methods=['POST'])
+def place_order():
+    # Fetch form data
+    shipping_address = request.form.get('shipping_address')
+    shipping_city = request.form.get('shipping_city')
+    shipping_state = request.form.get('shipping_state')
+    shipping_zip = request.form.get('shipping_zip')
+    shipping_country = request.form.get('shipping_country')
+
+    billing_address = request.form.get('billing_address')
+    billing_city = request.form.get('billing_city')
+    billing_state = request.form.get('billing_state')
+    billing_zip = request.form.get('billing_zip')
+    billing_country = request.form.get('billing_country')
+
+    # Check if the billing address is the same as shipping address
+    if request.form.get('same_as_shipping'):
+        billing_address = shipping_address
+        billing_city = shipping_city
+        billing_state = shipping_state
+        billing_zip = shipping_zip
+        billing_country = shipping_country
+
+    # Process the order and store the details (implementation needed)
+
+    # Redirect to a confirmation page or handle further actions
+    return redirect(url_for('order_confirmation'))
+
+
 
 
 @app.route('/viewproducts/<int:category_id>', methods=['GET', 'POST'])

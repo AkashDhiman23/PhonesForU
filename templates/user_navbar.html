@@ -29,29 +29,36 @@
                     {% set total_price = 0 %}
                     {% for item in session.get('cart') %}
                         {% set product = products | selectattr("id", "equalto", item.product_id) | list | first %}
-                        {% set total_price = total_price + (product.product_price * item.quantity) %}
+                        {% set item_total_price = product.product_price * item.quantity %}
+                        {% set total_price = total_price + item_total_price %}
                         <div class="dropdown-item d-flex align-items-center">
                             <img src="{{ product.product_main_image }}" alt="{{ product.product_title }}" width="50" height="50" class="mr-2">
                             <div>
                                 <strong>{{ product.product_title }}</strong><br>
-                                <span>Quantity: {{ item.quantity }}</span><br>
-                                <span>Price: {{ product.product_price }} NZD</span>
+                                <span class="cart-item-quantity">Quantity: {{ item.quantity }}</span><br>
+                                <div class="input-group mb-3">
+                                    <div class="input-group-prepend">
+                                        <button class="btn btn-outline-secondary btn-minus" type="button" data-item="{{ item.product_id }}">-</button>
+                                    </div>
+                                    <input type="text" class="form-control quantity" value="{{ item.quantity }}" readonly>
+                                    <div class="input-group-append">
+                                        <button class="btn btn-outline-secondary btn-plus" type="button" data-item="{{ item.product_id }}">+</button>
+                                    </div>
+                                </div>
+                                <!-- <span>Price: {{ product.product_price }} NZD</span><br> -->
+                                <span>Total: {{ item_total_price }} NZD</span>
                             </div>
-                            <a href="{{ url_for('remove_from_cart', product_id=product.id) }}" class="ml-auto text-danger" style="color: black;">
+                            <a href="{{ url_for('remove_from_cart', product_id=product.id) }}" class="ml-auto text-danger remove-btn" data-product-id="{{ product.id }}" style="color: black;">
                                 <span aria-hidden="true" style="color: black;">&times;</span>
                             </a>
                         </div>
                     {% endfor %}
-                    <div class="dropdown-divider"></div>
-                    <div class="dropdown-item">
-                        Total Price: {{ total_price }} NZD
-                    </div>
+                    
                 {% else %}
                     <div class="dropdown-item">Your cart is empty.</div>
                 {% endif %}
                 <div class="dropdown-divider"></div>
-                <a class="dropdown-item text-center" href="">View Cart</a>
-            </div>
+                <a class="dropdown-item text-center" href="{{ url_for('user_cart', cart=session.get('cart', [])) }}">View Cart</a>
         </li>
     </ul>
     <label for="nav-toggle" class="icon-burger">
@@ -61,23 +68,114 @@
     </label>
 </nav>
 
-
-<!-- <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
-    function removeFromCart(url) {
-        $.ajax({
-            url: url,
-            method: 'GET',
-            success: function(response) {
-                console.log("Item removed from cart successfully:", response);
-                // You may want to update the cart display here if needed
-                // For example, you could reload the page to reflect the updated cart state
-                // window.location.reload();
-            },
-            error: function(xhr, status, error) {
-                console.error("Error removing item from cart:", error);
+    $(document).ready(function() {
+        // Retrieve cart data from the hidden input field
+        var cartData = JSON.parse($('#cart-data').val());
+
+        function updateCartDisplay(cart) {
+            var totalPriceContainer = $('#total-price-container');
+            var total_price = 0;
+
+            if (cart.length > 0) {
+                $.each(cart, function(index, item) {
+                    var product = products.find(product => product.id === item.product_id);
+                    if (product) {
+                        total_price += product.product_price * item.quantity;
+                    }
+                });
+            }
+
+            totalPriceContainer.text("Total Price: " + total_price.toFixed(2) + " NZD");
+        }
+
+        // Initial update of cart display
+        updateCartDisplay(cartData);
+
+        // Function to handle remove button click
+        $('.remove-btn').click(function() {
+            var product_id = $(this).data('product-id');
+            removeFromCart(product_id);
+        });
+
+        // Function to remove item from cart
+        function removeFromCart(product_id) {
+            $.ajax({
+                url: `/remove_from_cart/${product_id}`,
+                method: 'GET',
+                success: function(response) {
+                    if (response.success) {
+                        // Update cart display
+                        updateCartDisplay(response.cart);
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error("Error removing item from cart:", error);
+                }
+                
+            });
+        }
+
+        // Function to handle plus button click
+        $(".btn-plus").click(function() {
+            var item_id = $(this).data("item");
+            var quantity_field = $(this).closest(".input-group").find(".quantity");
+            var current_quantity = parseInt(quantity_field.val());
+            var new_quantity = current_quantity + 1;
+            quantity_field.val(new_quantity);
+            updateItemQuantity(item_id, new_quantity);
+        });
+
+        // Function to handle minus button click
+        $(".btn-minus").click(function() {
+            var item_id = $(this).data("item");
+            var quantity_field = $(this).closest(".input-group").find(".quantity");
+            var current_quantity = parseInt(quantity_field.val());
+            var new_quantity = current_quantity - 1;
+            if (new_quantity >= 1) {
+                quantity_field.val(new_quantity);
+                updateItemQuantity(item_id, new_quantity);
             }
         });
-    }
+
+        function updateItemQuantity(item_id, quantity) {
+            // Send AJAX request to update quantity in database
+            $.ajax({
+                url: '/update-cart-item',
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    cart_item_id: item_id,
+                    quantity: quantity
+                }),
+                success: function(response) {
+                    // Update total price after successful response
+                    updateItemTotal(item_id, quantity);
+                    updateTotalPrice();
+                },
+                error: function(error) {
+                    console.error('Error updating quantity:', error);
+                }
+            });
+        }
+
+        function updateItemTotal(item_id, quantity) {
+            // Update the displayed total price for the item
+            var unit_price = parseFloat($("#item-" + item_id + "-price").text().replace("Price: ", "").replace(" NZD", ""));
+            var new_item_total_price = unit_price * quantity;
+            $("#item-" + item_id + "-total").text("Total: " + new_item_total_price.toFixed(2) + " NZD");
+        }
+
+        function updateTotalPrice() {
+            // Update the total price in the order summary
+            var total_price = 0;
+            $(".item-total").each(function() {
+                var item_total_price = parseFloat($(this).text().replace("Total: ", "").replace(" NZD", ""));
+                total_price += item_total_price;
+            });
+            $("#total-price").text("Total Price: " + total_price.toFixed(2) + " NZD");
+        }
+    });
 </script>
- -->
+

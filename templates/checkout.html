@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Checkout</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
+    <style>
+        /* Custom styles can be added here */
+        .container {
+            margin-bottom: 50px; /* Adjust this value as needed */
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-4">
+        <h2>Checkout</h2>
+
+        <div class="card">
+            <div class="card-header">
+                User Information
+            </div>
+            <div class="card-body">
+                <p class="card-text"><strong>Name:</strong> {{ user.user_firstname }} {{ user.user_lastname }}</p>
+                <p class="card-text"><strong>Email:</strong> {{ user.email_address }}</p>
+                <p class="card-text"><strong>Mobile:</strong> {{ user.mobile }}</p>
+            </div>
+        </div>
+
+        <div class="card mt-4">
+            <div class="card-header">
+                Cart Items
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Product</th>
+                                <th>Price</th>
+                                <th>Quantity</th>
+                                <th>Total Price</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in cart_items %}
+                            <tr class="cart-item">
+                                <td>{{ item.product.product_name if item.product else "Product not available" }}</td>
+                                <td class="price">{{ item.product.product_price }}</td>
+                                <td class="quantity">{{ item.quantity }}</td>
+                                <td class="total-price">{{ item.product.product_price * item.quantity if item.product else 0 }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mt-4">
+            <div class="card-header">
+                Shipping Address
+            </div>
+            <div class="card-body">
+                <form action="/place-order" method="POST">
+                    <div class="form-group">
+                        <label for="shipping_address">Shipping Address</label>
+                        <textarea class="form-control" id="shipping_address" name="shipping_address" rows="3" required>{{ user.shipping_address }}</textarea>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group col-md-6">
+                            <label for="shipping_city">City</label>
+                            <input type="text" class="form-control" id="shipping_city" name="shipping_city" value="{{ user.shipping_city }}" required>
+                        </div>
+                        <div class="form-group col-md-4">
+                            <label for="shipping_state">State</label>
+                            <input type="text" class="form-control" id="shipping_state" name="shipping_state" value="{{ user.shipping_state }}" required>
+                        </div>
+                        <div class="form-group col-md-2">
+                            <label for="shipping_zip">Zip</label>
+                            <input type="text" class="form-control" id="shipping_zip" name="shipping_zip" value="{{ user.shipping_zip }}" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="shipping_country">Country</label>
+                        <input type="text" class="form-control" id="shipping_country" name="shipping_country" value="{{ user.shipping_country }}" required>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" value="" id="same_address">
+                        <label class="form-check-label" for="same_address">
+                            Billing address same as shipping address
+                        </label>
+                    </div>
+                    
+                    <div id="billing_address_fields" style="display: none;">
+                        <hr>
+                        <label>Billing Address</label>
+                        <div class="form-group">
+                            <textarea class="form-control" id="billing_address" name="billing_address" rows="3" required></textarea>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group col-md-6">
+                                <label for="billing_city">City</label>
+                                <input type="text" class="form-control" id="billing_city" name="billing_city" required>
+                            </div>
+                            <div class="form-group col-md-4">
+                                <label for="billing_state">State</label>
+                                <input type="text" class="form-control" id="billing_state" name="billing_state" required>
+                            </div>
+                            <div class="form-group col-md-2">
+                                <label for="billing_zip">Zip</label>
+                                <input type="text" class="form-control" id="billing_zip" name="billing_zip" required>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="billing_country">Country</label>
+                            <input type="text" class="form-control" id="billing_country" name="billing_country" required>
+                        </div>
+                        <button type="button" class="btn btn-primary" id="copy_address_btn">Copy Shipping Address</button>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Total Amount to Pay</label>
+                        <p id="total-amount" class="font-weight-bold text-success">{{ total_price }} NZD</p>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Place Order</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="mt-4">
+            <a href="/user-home" class="btn btn-secondary">Back to Shopping</a>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            $('#same_address').change(function() {
+                if ($(this).is(":checked")) {
+                    $('#billing_address_fields').slideUp();
+                } else {
+                    $('#billing_address_fields').slideDown();
+                }
+            });
+
+            $('#copy_address_btn').click(function() {
+                // Copy shipping address to billing address fields
+                $('#billing_address').val($('#shipping_address').val());
+                $('#billing_city').val($('#shipping_city').val());
+                $('#billing_state').val($('#shipping_state').val());
+                $('#billing_zip').val($('#shipping_zip').val());
+                $('#billing_country').val($('#shipping_country').val());
+
+                // Slide down the billing address fields if hidden
+                $('#billing_address_fields').slideDown();
+            });
+        });
+    </script>
+</body>
+</html>
