@@ -9,17 +9,17 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
     <style>
+        /* Adjust the width and styles as needed */
         .quantity {
-            width: 5px;
             text-align: center;
         }
 
         .input-group-prepend, .input-group-append {
-            width: 35px; /* Adjust as needed */
+            width: 35px; /* Adjust button width */
         }
 
         .btn-minus, .btn-plus {
-            width: 100%; /* Make buttons fill their container */
+            width: 35px; /* Adjust button width */
         }
     </style>
 </head>
@@ -34,7 +34,7 @@
     
     <h2>Your Cart</h2>
     <div class="row">
-        <div class="col-md-8">
+        <div class="col-md-12">
             <div class="list-group">
                 {% for item in cart %}
                     <div class="list-group-item">
@@ -61,7 +61,9 @@
                 {% endfor %}
             </div>
         </div>
-        <div class="col-md-4">
+    </div>
+    <div class="row mt-4">
+        <div class="col-md-12">
             <div class="card">
                 <div class="card-body">
                     <h5 class="card-title">Order Summary</h5>

@@ -8,7 +8,28 @@
     <style>
         /* Custom styles can be added here */
         .container {
-            margin-bottom: 50px; /* Adjust this value as needed */
+            margin-bottom: 50px; 
+        }
+
+        .form-check-input-lg {
+            width: 1.5em;
+            height: 1.5em;
+        }
+
+        .form-check-label-lg {
+            padding-left: 15px;
+            font-size: 1.25em;
+            font-weight: 600;
+        }
+
+        .btn-black {
+            background-color: black;
+            color: white;
+        }
+
+        .btn-black:hover {
+            background-color: #333;
+            color: white;
         }
     </style>
 </head>
@@ -49,7 +70,6 @@
                                 <td class="price">{{ item.product.product_price }}</td>
                                 <td class="quantity">{{ item.quantity }}</td>
                                 <td class="total-price">{{ item.product.product_price * item.quantity if item.product else 0 }}</td>
-                            </tr>
                             {% endfor %}
                         </tbody>
                     </table>
@@ -62,7 +82,7 @@
                 Shipping Address
             </div>
             <div class="card-body">
-                <form action="/place-order" method="POST">
+                <form id="checkout-form" action="/place-order" method="POST">
                     <div class="form-group">
                         <label for="shipping_address">Shipping Address</label>
                         <textarea class="form-control" id="shipping_address" name="shipping_address" rows="3" required>{{ user.shipping_address }}</textarea>
@@ -85,17 +105,25 @@
                         <label for="shipping_country">Country</label>
                         <input type="text" class="form-control" id="shipping_country" name="shipping_country" value="{{ user.shipping_country }}" required>
                     </div>
-                    <div class="form-check">
-                        <input class="form-check-input" type="checkbox" value="" id="same_address">
-                        <label class="form-check-label" for="same_address">
+                </form>
+            </div>
+        </div>
+
+        <div class="card mt-4">
+            <div class="card-header">
+                Billing Address
+            </div>
+            <div class="card-body">
+                <form>
+                    <div class="form-check mb-4">
+                        <input class="form-check-input form-check-input-lg" type="checkbox" id="same_address">
+                        <label class="form-check-label form-check-label-lg" for="same_address">
                             Billing address same as shipping address
                         </label>
                     </div>
-                    
-                    <div id="billing_address_fields" style="display: none;">
-                        <hr>
-                        <label>Billing Address</label>
+                    <div id="billing_address_fields">
                         <div class="form-group">
+                            <label for="billing_address">Billing Address</label>
                             <textarea class="form-control" id="billing_address" name="billing_address" rows="3" required></textarea>
                         </div>
                         <div class="form-row">
@@ -116,20 +144,27 @@
                             <label for="billing_country">Country</label>
                             <input type="text" class="form-control" id="billing_country" name="billing_country" required>
                         </div>
-                        <button type="button" class="btn btn-primary" id="copy_address_btn">Copy Shipping Address</button>
                     </div>
-                    
-                    <div class="form-group">
-                        <label>Total Amount to Pay</label>
-                        <p id="total-amount" class="font-weight-bold text-success">{{ total_price }} NZD</p>
-                    </div>
-                    <button type="submit" class="btn btn-primary">Place Order</button>
                 </form>
             </div>
         </div>
 
+        <div class="card mt-4">
+            <div class="card-header">
+                Total Amount
+            </div>
+            <div class="card-body">
+                <div class="form-group">
+                    <label>Total Amount to Pay</label>
+                    <p id="total-amount" class="font-weight-bold text-success">{{ total_price }} NZD</p>
+
+                    <button type="submit" class="btn btn-primary">Place Order</button>
+                </div>
+            </div>
+        </div>
+
         <div class="mt-4">
-            <a href="/user-home" class="btn btn-secondary">Back to Shopping</a>
+            <a href="/user-home" class="btn btn-secondary btn-black">Back to Shopping</a>
         </div>
     </div>
 
@@ -138,24 +173,33 @@
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
     <script>
         $(document).ready(function() {
+            // Update total amount dynamically
+            function updateTotalAmount() {
+                var totalAmount = 0;
+                $(".total-price").each(function() {
+                    totalAmount += parseFloat($(this).text());
+                });
+                $("#total-amount").text(totalAmount.toFixed(2) + " NZD");
+            }
+
+            // Initial update
+            updateTotalAmount();
+
+            // Checkbox to copy shipping address to billing address
             $('#same_address').change(function() {
                 if ($(this).is(":checked")) {
-                    $('#billing_address_fields').slideUp();
+                    $('#billing_address').val($('#shipping_address').val());
+                    $('#billing_city').val($('#shipping_city').val());
+                    $('#billing_state').val($('#shipping_state').val());
+                    $('#billing_zip').val($('#shipping_zip').val());
+                    $('#billing_country').val($('#shipping_country').val());
                 } else {
-                    $('#billing_address_fields').slideDown();
+                    $('#billing_address').val('');
+                    $('#billing_city').val('');
+                    $('#billing_state').val('');
+                    $('#billing_zip').val('');
+                    $('#billing_country').val('');
                 }
-            });
-
-            $('#copy_address_btn').click(function() {
-                // Copy shipping address to billing address fields
-                $('#billing_address').val($('#shipping_address').val());
-                $('#billing_city').val($('#shipping_city').val());
-                $('#billing_state').val($('#shipping_state').val());
-                $('#billing_zip').val($('#shipping_zip').val());
-                $('#billing_country').val($('#shipping_country').val());
-
-                // Slide down the billing address fields if hidden
-                $('#billing_address_fields').slideDown();
             });
         });
     </script>
