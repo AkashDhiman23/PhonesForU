@@ -83,15 +83,19 @@ class Cart(db.Model):
 class PaymentRecord(db.Model):
     __tablename__ = 'payment_record'
     transaction_id = db.Column(db.String(255), primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.user_id'), nullable=False)
     first_name = db.Column(db.String, nullable=False)
     last_name = db.Column(db.String, nullable=False)
     email_address = db.Column(db.String, nullable=False)
-    mobile_no = db.Column(db.String, nullable=False)
-
-    user_id = db.Column(db.Integer, db.ForeignKey('user.user_id'), nullable=False)
-    product_id = db.Column(db.Integer, db.ForeignKey('Product.id'), nullable=False)  # Corrected foreign key reference
+    mobile = db.Column(db.String, nullable=False)
+    product_id = db.Column(db.Integer, db.ForeignKey('Product.id'), nullable=False)
     product_name = db.Column(db.String, nullable=False)
     product_price = db.Column(db.Numeric(10, 2), nullable=False)
+    shipping_address = db.Column(db.String, nullable=False)
+    shipping_city = db.Column(db.String, nullable=False)
+    shipping_state = db.Column(db.String, nullable=False)
+    shipping_zip = db.Column(db.String, nullable=False)
+    shipping_country = db.Column(db.String, nullable=False)
     product_quantity = db.Column(db.Integer, nullable=False)
     total_amount = db.Column(db.Numeric(10, 2), nullable=False)
     transaction_date = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
@@ -101,8 +105,5 @@ class PaymentRecord(db.Model):
 
     def __repr__(self):
         return (f"Transaction('{self.transaction_id}', '{self.first_name} {self.last_name}', "
-                f"'{self.email_address}', '{self.mobile_no}', '{self.product_name}', '{self.product_price}', "
-                f"'{self.product_quantity}', '{self.total_amount}', "
-                f"'{self.transaction_date}')")
-
-# Ensure to remove duplicate or unnecessary relationship definitions
+                f"'{self.email_address}', '{self.mobile}', '{self.product_name}', '{self.product_price}', "
+                f"'{self.product_quantity}', '{self.total_amount}', '{self.transaction_date}')")

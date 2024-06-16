@@ -1,36 +1,50 @@
 import os
+from fastapi.encoders import jsonable_encoder
 import psycopg2
-from flask import Flask, render_template, request,session, redirect, url_for, jsonify,flash,send_from_directory
+from flask import Flask, render_template, request, session, redirect, url_for, jsonify, flash, send_from_directory
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy.orm import Session
 from flask_migrate import Migrate
+from sqlalchemy.orm import Session
 from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
 from model import ProductCategory, ProductList, db, User, MerchantUser, Cart, PaymentRecord
 from sqlalchemy.sql.expression import func
-from sqlalchemy import Column, Integer, ForeignKey
 from datetime import datetime as dt
 import json
-from fastapi.encoders import jsonable_encoder
+import stripe
 
 app = Flask(__name__)
-
+# app.config.from_pyfile('"D:\cloud computin projects\PhonesForU\venv\Lib\site-packages\flask\config.py')
+app.config['STRIPE_PUBLIC_KEY'] = 'pk_test_51PJPlI098w1868DgStq59Ol9oGjPuVzf9Gi8w1aSa3UFFPU4gtKoum5KPA2DymTGWGHDh1p6Hb1JoIrVUb3CsBV700mRl7AgzB'
+#  Stripe keys
+stripe_keys = {
+  'secret_key':['sk_test_51PJPlI098w1868Dgc6pSzhp7ESO87GRpL89KmZVlHl6TdRLtaeRokRO5RkJPOmS7oCsCddTlPP3SGqjFAez52rs300lxnlV9Lg'],
+  'public_key':['pk_test_51PJPlI098w1868DgStq59Ol9oGjPuVzf9Gi8w1aSa3UFFPU4gtKoum5KPA2DymTGWGHDh1p6Hb1JoIrVUb3CsBV700mRl7AgzB']
+}
+# Database configuration
 app.config['SESSION_COOKIE_SECURE'] = True
 app.config['SESSION_COOKIE_HTTPONLY'] = True
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 app.config['SQLALCHEMY_DATABASE_URI'] = "postgresql://postgres:dhiman223@localhost:5432/ecommercedb"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config['STATIC_FOLDER'] = 'static'
-migrate = Migrate(app, db)
+
+# Initialize SQLAlchemy and Flask-Migrate
 db.init_app(app)
-PRODUCT_IMAGE_UPLOAD_FOLDER = 'static/img/product_images/'
+migrate = Migrate(app, db)
 
-
-
-app.config['SECRET_KEY'] = 'thisissecret'
-app.config['STATIC_FOLDER'] = 'static'
+# Folder configuration for product images
 app.config['PRODUCT_IMAGE_UPLOAD_FOLDER'] = 'static/img/product_images/'
+
+# Secret key for Flask sessions
+app.config['SECRET_KEY'] = 'thisissecret'
+
+# Stripe API key configuration
+stripe.api_key = stripe_keys['secret_key']
+
+# Allowed file extensions for file uploads
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
+
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
@@ -594,9 +608,12 @@ def checkout():
 
     # Calculate total price from cart items
     total_price = sum(item.product.product_price * item.quantity if item.product else 0 for item in cart_items)
+    
+    # Assuming STRIPE_PUBLIC_KEY is defined in your Flask app configuration
+    stripe_public_key = app.config["STRIPE_PUBLIC_KEY"]
 
-    return render_template('checkout.html', user=user, cart_items=cart_items, total_price=total_price)
-
+    return render_template('checkout.html', user=user, cart_items=cart_items, total_price=total_price, stripe_public_key=stripe_public_key)
+     
 @app.route('/place-order', methods=['POST'])
 def place_order():
     # Fetch form data
@@ -624,6 +641,44 @@ def place_order():
 
     # Redirect to a confirmation page or handle further actions
     return redirect(url_for('order_confirmation'))
+
+@app.route('/process_payment', methods=['POST'])
+def process_payment():
+    try:
+        # Token is created using Checkout or Elements!
+        # Get the payment token ID submitted by the form:
+        token = request.form['stripeToken']
+        # Charge the user's card:
+        charge = stripe.Charge.create(
+            amount=int(float(request.form['amount']) * 100),  # Amount in cents
+            currency='usd',
+            description='Example charge',
+            source=token,
+        )
+        # Here you can handle additional actions after successful payment, e.g., saving order details to the database
+        return jsonify({'success': True})
+    except stripe.error.CardError as e:
+        # Since it's a decline, stripe.error.CardError will be caught
+        return jsonify({'error': e.error.message})
+    except stripe.error.RateLimitError as e:
+        # Too many requests made to the API too quickly
+        return jsonify({'error': 'Rate limit error'})
+    except stripe.error.InvalidRequestError as e:
+        # Invalid parameters were supplied to Stripe's API
+        return jsonify({'error': 'Invalid parameters'})
+    except stripe.error.AuthenticationError as e:
+        # Authentication with Stripe's API failed
+        # (maybe you changed API keys recently)
+        return jsonify({'error': 'Authentication error'})
+    except stripe.error.APIConnectionError as e:
+        # Network communication with Stripe failed
+        return jsonify({'error': 'Network error'})
+    except stripe.error.StripeError as e:
+        # Display a very generic error to the user
+        return jsonify({'error': 'Stripe error'})
+    except Exception as e:
+        # Something else happened, completely unrelated to Stripe
+        return jsonify({'error': 'Unknown error'})
 
 
 
