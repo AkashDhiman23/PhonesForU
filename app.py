@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from flask_migrate import Migrate
 from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
-from model import ProductCategory, ProductList, db, User,MerchantUser,Cart
+from model import ProductCategory, ProductList, db, User, MerchantUser, Cart, PaymentRecord
 from sqlalchemy.sql.expression import func
 from sqlalchemy import Column, Integer, ForeignKey
 from datetime import datetime as dt
@@ -719,7 +719,7 @@ def change_password(user_id):
         
         # Update the user's password hash directly in the database
         hashed_password = generate_password_hash(new_password)
-        db.session.query(User).filter(User.user_id == user_id).update({User.password_hash: hashed_password})
+        user.password_hash = hashed_password  # Directly update the user instance
         db.session.commit()  # Commit the changes to the database
         
         flash('Password updated successfully.', 'success')

@@ -16,9 +16,10 @@ class User(db.Model):
     mobile = db.Column(db.String(30))
     password_hash = db.Column(db.String(1000), nullable=False)
     cart_items = relationship('Cart', back_populates='user', cascade='all, delete-orphan')
+    payments = relationship('PaymentRecord', back_populates='user', cascade='all, delete-orphan')
 
     def __repr__(self):
-        return f"User('{self.user_firstname},{self.user_lastname}', '{self.email_address}')"
+        return f"User('{self.user_firstname}, {self.user_lastname}', '{self.email_address}')"
 
 class MerchantUser(db.Model):
     __tablename__ = 'MerchantUser'
@@ -45,7 +46,7 @@ class ProductCategory(db.Model):
 
     def __repr__(self):
         return f"<ProductCategory id={self.id}, name='{self.product_category_name}'>"
-    
+
 class ProductList(db.Model):
     __tablename__ = 'Product'
     id = db.Column(db.Integer, primary_key=True)
@@ -61,6 +62,7 @@ class ProductList(db.Model):
     category_id = db.Column(db.Integer, db.ForeignKey('product_category.id'), nullable=False)
     category = relationship('ProductCategory', back_populates='products')
     cart_items = relationship('Cart', back_populates='product', cascade='all, delete-orphan')
+    transactions = relationship('PaymentRecord', back_populates='product')
 
     def __repr__(self):
         return f"<ProductList id={self.id}, name='{self.product_name}'>"
@@ -78,25 +80,29 @@ class Cart(db.Model):
     def __repr__(self):
         return f"<Cart cart_item_id={self.cart_item_id}, user_id={self.user_id}, product_id={self.product_id}, quantity={self.quantity}>"
 
-# Uncomment and adjust if needed
-# class PaymentRecord(db.Model):
-#     __tablename__ = 'payment_record'
-#     transaction_id = db.Column(db.String(255), primary_key=True)
-#     user_firstname = db.Column(db.String(1000), nullable=False)
-#     user_lastname = db.Column(db.String(1000), nullable=False)
-#     email_address = db.Column(db.String(500), nullable=False)
-#     mobile = db.Column(db.String(30), nullable=False)
-#     product_id = db.Column(db.Integer, db.ForeignKey('product_list.id'), nullable=False)
-#     product = relationship('ProductList', backref='transactions')
-#     product_name = db.Column(db.String(255), nullable=False)
-#     product_price = db.Column(db.Numeric(10, 2), nullable=False)
-#     transaction_date = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
-#
-#     def __repr__(self):
-#         return (f"Transaction('{self.transaction_id}', '{self.user_firstname} {self.user_lastname}', "
-#                 f"'{self.email_address}', '{self.mobile}', '{self.product_name}', '{self.product_price}', "
-#                 f"'{self.transaction_date}')")
+class PaymentRecord(db.Model):
+    __tablename__ = 'payment_record'
+    transaction_id = db.Column(db.String(255), primary_key=True)
+    first_name = db.Column(db.String, nullable=False)
+    last_name = db.Column(db.String, nullable=False)
+    email_address = db.Column(db.String, nullable=False)
+    mobile_no = db.Column(db.String, nullable=False)
 
-# Establish relationships
-User.cart_items = relationship('Cart', back_populates='user', cascade='all, delete-orphan')
-ProductList.cart_items = relationship('Cart', back_populates='product', cascade='all, delete-orphan')
+    user_id = db.Column(db.Integer, db.ForeignKey('user.user_id'), nullable=False)
+    product_id = db.Column(db.Integer, db.ForeignKey('Product.id'), nullable=False)  # Corrected foreign key reference
+    product_name = db.Column(db.String, nullable=False)
+    product_price = db.Column(db.Numeric(10, 2), nullable=False)
+    product_quantity = db.Column(db.Integer, nullable=False)
+    total_amount = db.Column(db.Numeric(10, 2), nullable=False)
+    transaction_date = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+
+    user = relationship('User', back_populates='payments')
+    product = relationship('ProductList', back_populates='transactions')
+
+    def __repr__(self):
+        return (f"Transaction('{self.transaction_id}', '{self.first_name} {self.last_name}', "
+                f"'{self.email_address}', '{self.mobile_no}', '{self.product_name}', '{self.product_price}', "
+                f"'{self.product_quantity}', '{self.total_amount}', "
+                f"'{self.transaction_date}')")
+
+# Ensure to remove duplicate or unnecessary relationship definitions
