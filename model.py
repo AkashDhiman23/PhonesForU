@@ -84,26 +84,27 @@ class PaymentRecord(db.Model):
     __tablename__ = 'payment_record'
     transaction_id = db.Column(db.String(255), primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.user_id'), nullable=False)
-    first_name = db.Column(db.String, nullable=False)
-    last_name = db.Column(db.String, nullable=False)
-    email_address = db.Column(db.String, nullable=False)
-    mobile = db.Column(db.String, nullable=False)
+    user_first_name = db.Column(db.String, nullable=False)
+    user_last_name = db.Column(db.String, nullable=False)
+    user_email_address = db.Column(db.String, nullable=False)
+    user_mobile = db.Column(db.String, nullable=False)
     product_id = db.Column(db.Integer, db.ForeignKey('Product.id'), nullable=False)
     product_name = db.Column(db.String, nullable=False)
     product_price = db.Column(db.Numeric(10, 2), nullable=False)
+    product_quantity = db.Column(db.Integer, nullable=False)
     shipping_address = db.Column(db.String, nullable=False)
     shipping_city = db.Column(db.String, nullable=False)
     shipping_state = db.Column(db.String, nullable=False)
     shipping_zip = db.Column(db.String, nullable=False)
     shipping_country = db.Column(db.String, nullable=False)
-    product_quantity = db.Column(db.Integer, nullable=False)
     total_amount = db.Column(db.Numeric(10, 2), nullable=False)
     transaction_date = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
 
-    user = relationship('User', back_populates='payments')
-    product = relationship('ProductList', back_populates='transactions')
+    user = relationship('User', foreign_keys=[user_id])
+    product = relationship('ProductList')
 
     def __repr__(self):
-        return (f"Transaction('{self.transaction_id}', '{self.first_name} {self.last_name}', "
-                f"'{self.email_address}', '{self.mobile}', '{self.product_name}', '{self.product_price}', "
-                f"'{self.product_quantity}', '{self.total_amount}', '{self.transaction_date}')")
+        return (f"PaymentRecord('{self.transaction_id}', '{self.user_first_name} {self.user_last_name}', "
+                f"'{self.user_email_address}', '{self.user_mobile}', '{self.product_name}', "
+                f"'{self.product_price}', '{self.product_quantity}', '{self.total_amount}', "
+                f"'{self.transaction_date}')")

@@ -17,97 +17,7 @@
     
     {% include 'admin_navbar.html' %}
 
-    <!-- Login Modal -->
-    <!-- <div class="modal fade" id="loginModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered" role="document">
-            <div class="modal-content">
-                <div class="modal-header border-bottom-0">
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">×</span>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <div class="form-title text-center">
-                        <h4>Login</h4>
-                    </div>
-                    <div class="d-flex flex-column text-center">
-                        <form id="login-form">
-                            <div class="form-group">
-                                <input type="email" class="form-control" name="email" placeholder="Enter Email address">
-                            </div>
-                            <div class="form-group">
-                                <input type="password" class="form-control" name="password" placeholder="Enter Password">
-                            </div>
-                            <button type="submit" class="btn btn-info btn-block btn-round">Login</button>
-                        </form>
-                        <span id="login-message" class="text-danger"></span>
-                    </div>
-                </div>
-                <div class="modal-footer d-flex justify-content-center">
-                    <div class="signup-section">Not a member yet? <a href="#signupModal" class="text-info" data-toggle="modal" data-dismiss="modal">Sign Up</a>.</div>
-                </div>
-            </div>
-        </div>
-    </div> -->
-
     
-
-
-
-
-    <!-- Signup Modal -->
-    <!-- <div class="modal fade" id="signupModal"  tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered" role="document">
-            <div class="modal-content">
-                <div class="modal-header border-bottom-0">
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">×</span>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <div class="form-title text-center">
-                        <h4>Signup for Merchant</h4>
-                    </div>
-                    <div class="d-flex flex-column text-center">
-                        <form id="signup-form">
-                            <div class="form-group">
-                                <div class="form-group">
-                                    <input type="text" class="form-control" name="companyregisterno" placeholder="Enter Company Registration No.">
-                                </div>
-                                <input type="text" class="form-control" name="companyname" placeholder="Enter Company name">
-                            </div>
-                            <div class="form-group">
-                                <input type="text" class="form-control" name="firstname" placeholder="Enter First name">
-                            </div>
-                            <div class="form-group">
-                                <input type="text" class="form-control" name="lastname" placeholder="Enter Last name">
-                            </div>
-                            <div class="form-group">
-                                <input type="email" class="form-control" name="email" placeholder="Enter Company Email address">
-                            </div>
-                            <div class="form-group">
-                                <input type="text" class="form-control" name="companyaddress" placeholder="Enter Company address">
-                            </div>
-                            <div class="form-group">
-                                <input type="text" class="form-control" name="companypostcode" placeholder="Enter Company postcode">
-                            </div>
-                            <div class="form-group">
-                                <input type="text" class="form-control" name="mobile" placeholder="Enter Company phone number">
-                            </div>
-                            <div class="form-group">
-                                <input type="password" class="form-control" name="password" placeholder="Enter Password">
-                            </div>
-                            <button type="submit" class="btn btn-info btn-block btn-round">Signup</button>
-                        </form>
-                        <span id="signup-message" class="text-danger"></span>
-                    </div>
-                </div>
-                <div class="modal-footer d-flex justify-content-center">
-                    <div class="signup-section">Already a member? <a href="#loginModal" class="text-info" data-toggle="modal" data-dismiss="modal">Login</a>.</div>
-                </div>
-            </div>
-        </div>
-    </div> -->
     
 
 
@@ -117,11 +27,11 @@
           <form id="login-form" >
             <div class="user-details">
               <div class="input-box">
-                <span class="details">Email </span>
+                <span class="details" style="color: white;">Email</span>
                 <input type="email" class="form-control" name="email" placeholder="Enter Email address">
               </div>
               <div class="input-box">
-                <span class="details">Password</span>
+                <span class="details" style="color: white;">Password</span>
                 <input type="password" class="form-control" name="password" placeholder="Enter Password">         
              </div>
              <button type="submit" class="btn btn-info btn-block btn-round" style="background-color: black; color: white;">Login</button>
@@ -130,7 +40,7 @@
           </form>
           </div>
           <div class="modal-footer d-flex justify-content-center">
-            <div class="signup-section">Create a new account <a href="/merchantsignup" class="text-sucess"  >Signup</a>.
+            <div class="signup-section" style="color: white;">Create a new account <a href="/merchantsignup" class="text-sucess"  >Signup</a>.
           </div>
         </div>
     </div>

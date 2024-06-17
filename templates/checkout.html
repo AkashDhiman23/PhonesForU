@@ -147,19 +147,16 @@
             <div class="card-body">
                 <form id="payment-form" action="/payment" method="POST">
                     <div class="form-row">
-                  
                         <div id="card-element">
                             <script src="https://checkout.stripe.com/checkout.js" class="stripe-button"
                             data-key="pk_test_51PJPlI098w1868DgStq59Ol9oGjPuVzf9Gi8w1aSa3UFFPU4gtKoum5KPA2DymTGWGHDh1p6Hb1JoIrVUb3CsBV700mRl7AgzB"
-                            data-description="A Flask Charge"
-                            data-amount="1000"
-                          
+                            data-description="PhonesForYou"
+                            data-amount="{{ total_amount * 100 }}"   
                             data-locale="auto"></script>
                         </div>
-
-                       
                     </div>
-
+                    <!-- Hidden input field for total_amount -->
+                    <input type="hidden" name="total_amount" id="total_amount" value="{{ total_amount }}">
                     <button type="submit" class="btn btn-primary mt-3" id="submit-btn">Place Order</button>
                 </form>
             </div>
@@ -193,7 +190,7 @@
         };
 
         // Create a Stripe client
-        var stripe = Stripe('pk_test_51PJPlI098w1868DgStq59Ol9oGjPuVzf9Gi8w1aSa3UFFPU4gtKoum5KPA2DymTGWGHDh1p6Hb1JoIrVUb3CsBV700mRl7AgzB');
+        var stripe = Stripe('{{ stripe_public_key }}');
 
         // Create an instance of Elements
         var elements = stripe.elements();
@@ -248,4 +245,3 @@
     </script>
 </body>
 </html>
-

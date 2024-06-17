@@ -10,6 +10,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from model import ProductCategory, ProductList, db, User, MerchantUser, Cart, PaymentRecord
 from sqlalchemy.sql.expression import func
 from datetime import datetime as dt
+from datetime import datetime
 import json
 import stripe
 
@@ -607,12 +608,12 @@ def checkout():
     cart_items = Cart.query.filter_by(user_id=user_id).all()
 
     # Calculate total price from cart items
-    total_price = sum(item.product.product_price * item.quantity if item.product else 0 for item in cart_items)
+    total_amount = sum(item.product.product_price * item.quantity if item.product else 0 for item in cart_items)
     
     # Assuming STRIPE_PUBLIC_KEY is defined in your Flask app configuration
     stripe_public_key = app.config["STRIPE_PUBLIC_KEY"]
 
-    return render_template('checkout.html', user=user, cart_items=cart_items, total_price=total_price, stripe_public_key=stripe_public_key)
+    return render_template('checkout.html', user=user, cart_items=cart_items, total_amount=total_amount, stripe_public_key=stripe_public_key)
      
 @app.route('/place-order', methods=['POST'])
 def place_order():
@@ -623,24 +624,67 @@ def place_order():
     shipping_zip = request.form.get('shipping_zip')
     shipping_country = request.form.get('shipping_country')
 
-    billing_address = request.form.get('billing_address')
-    billing_city = request.form.get('billing_city')
-    billing_state = request.form.get('billing_state')
-    billing_zip = request.form.get('billing_zip')
-    billing_country = request.form.get('billing_country')
-
-    # Check if the billing address is the same as shipping address
-    if request.form.get('same_as_shipping'):
-        billing_address = shipping_address
-        billing_city = shipping_city
-        billing_state = shipping_state
-        billing_zip = shipping_zip
-        billing_country = shipping_country
-
+    
     # Process the order and store the details (implementation needed)
 
     # Redirect to a confirmation page or handle further actions
     return redirect(url_for('order_confirmation'))
+
+@app.route('/payment', methods=['POST'])
+def payment():
+    try:
+        # Retrieve token and total_amount from form data
+        stripe_token = request.form['stripeToken']
+        total_amount = float(request.form['total_amount'])
+        currency = 'NZD'  
+        # Process payment with Stripe
+        charge = stripe.Charge.create(
+            amount=int(total_amount * 100),  # Amount in cents
+            currency=currency,
+            description='Example charge',
+            source=stripe_token
+        )
+
+        # Create a PaymentRecord object and save it to the database
+        user_id = session['name']
+        user = User.query.get(user_id)
+
+        if not user:
+            return "User not found"  # Handle case where user does not exist (optional)
+
+        cart_items = Cart.query.filter_by(user_id=user_id).all()
+
+        for item in cart_items:
+            payment_record = PaymentRecord(
+                transaction_id=charge.id,  # Assuming Stripe charge ID as transaction ID
+                user_id=user.user_id,
+                user_first_name=user.user_firstname,
+                user_last_name=user.user_lastname,
+                user_email_address=user.email_address,
+                user_mobile=user.mobile,
+                product_id=item.product.id,
+                product_name=item.product.product_name,
+                product_price=item.product.product_price,
+                product_quantity=item.quantity,
+                shipping_address=user.shipping_address,
+                shipping_city=user.shipping_city,
+                shipping_state=user.shipping_state,
+                shipping_zip=user.shipping_zip,
+                shipping_country=user.shipping_country,
+                total_amount=total_amount,  # Use the total_amount from the form data
+                transaction_date=datetime.utcnow()
+            )
+            db.session.add(payment_record)
+            db.session.commit()
+
+
+        # Render payment success page
+        return render_template('payment_success.html', total_amount=total_amount)
+
+    except stripe.error.StripeError as e:
+        # Display payment error page
+        return render_template('payment_error.html', error_message=str(e))
+
 
 @app.route('/process_payment', methods=['POST'])
 def process_payment():
