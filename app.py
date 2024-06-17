@@ -14,14 +14,8 @@ from datetime import datetime
 import json
 import stripe
 
+
 app = Flask(__name__)
-# app.config.from_pyfile('"D:\cloud computin projects\PhonesForU\venv\Lib\site-packages\flask\config.py')
-app.config['STRIPE_PUBLIC_KEY'] = 'pk_test_51PJPlI098w1868DgStq59Ol9oGjPuVzf9Gi8w1aSa3UFFPU4gtKoum5KPA2DymTGWGHDh1p6Hb1JoIrVUb3CsBV700mRl7AgzB'
-#  Stripe keys
-stripe_keys = {
-  'secret_key':['sk_test_51PJPlI098w1868Dgc6pSzhp7ESO87GRpL89KmZVlHl6TdRLtaeRokRO5RkJPOmS7oCsCddTlPP3SGqjFAez52rs300lxnlV9Lg'],
-  'public_key':['pk_test_51PJPlI098w1868DgStq59Ol9oGjPuVzf9Gi8w1aSa3UFFPU4gtKoum5KPA2DymTGWGHDh1p6Hb1JoIrVUb3CsBV700mRl7AgzB']
-}
 # Database configuration
 app.config['SESSION_COOKIE_SECURE'] = True
 app.config['SESSION_COOKIE_HTTPONLY'] = True
@@ -40,8 +34,9 @@ app.config['PRODUCT_IMAGE_UPLOAD_FOLDER'] = 'static/img/product_images/'
 # Secret key for Flask sessions
 app.config['SECRET_KEY'] = 'thisissecret'
 
-# Stripe API key configuration
-stripe.api_key = stripe_keys['secret_key']
+# Stripe API keys
+app.config['STRIPE_PUBLIC_KEY'] = 'pk_test_51PJPlI098w1868DgStq59Ol9oGjPuVzf9Gi8w1aSa3UFFPU4gtKoum5KPA2DymTGWGHDh1p6Hb1JoIrVUb3CsBV700mRl7AgzB'
+stripe.api_key = 'sk_test_51PJPlI098w1868Dgc6pSzhp7ESO87GRpL89KmZVlHl6TdRLtaeRokRO5RkJPOmS7oCsCddTlPP3SGqjFAez52rs300lxnlV9Lg'
 
 # Allowed file extensions for file uploads
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
@@ -633,10 +628,16 @@ def place_order():
 @app.route('/payment', methods=['POST'])
 def payment():
     try:
-        # Retrieve token and total_amount from form data
+        # Retrieve form data
         stripe_token = request.form['stripeToken']
         total_amount = float(request.form['total_amount'])
-        currency = 'NZD'  
+        currency = 'NZD'
+        shipping_address = request.form['shipping_address']
+        shipping_city = request.form['shipping_city']
+        shipping_state = request.form['shipping_state']
+        shipping_zip = request.form['shipping_zip']
+        shipping_country = request.form['shipping_country']
+        
         # Process payment with Stripe
         charge = stripe.Charge.create(
             amount=int(total_amount * 100),  # Amount in cents
@@ -645,46 +646,52 @@ def payment():
             source=stripe_token
         )
 
-        # Create a PaymentRecord object and save it to the database
-        user_id = session['name']
+        user_id = session['user_id']
         user = User.query.get(user_id)
 
-        if not user:
-            return "User not found"  # Handle case where user does not exist (optional)
-
+        # Retrieve all cart items for the user
         cart_items = Cart.query.filter_by(user_id=user_id).all()
 
+        # Process each item in retrieved cart items
         for item in cart_items:
+            product = ProductList.query.get(item.product_id)
             payment_record = PaymentRecord(
-                transaction_id=charge.id,  # Assuming Stripe charge ID as transaction ID
+                transaction_id=charge.id,
                 user_id=user.user_id,
                 user_first_name=user.user_firstname,
                 user_last_name=user.user_lastname,
                 user_email_address=user.email_address,
                 user_mobile=user.mobile,
-                product_id=item.product.id,
-                product_name=item.product.product_name,
-                product_price=item.product.product_price,
+                product_id=product.id,
+                product_name=product.product_name,
+                product_price=product.product_price,
                 product_quantity=item.quantity,
-                shipping_address=user.shipping_address,
-                shipping_city=user.shipping_city,
-                shipping_state=user.shipping_state,
-                shipping_zip=user.shipping_zip,
-                shipping_country=user.shipping_country,
-                total_amount=total_amount,  # Use the total_amount from the form data
-                transaction_date=datetime.utcnow()
+                shipping_address=shipping_address,
+                shipping_city=shipping_city,
+                shipping_state=shipping_state,
+                shipping_zip=shipping_zip,
+                shipping_country=shipping_country,
+                total_amount=total_amount,
+                transaction_date=datetime.utcnow()  # Assuming you want current datetime
             )
             db.session.add(payment_record)
-            db.session.commit()
 
+        # Clear the user's cart after successful payment
+        Cart.query.filter_by(user_id=user_id).delete()
 
-        # Render payment success page
-        return render_template('payment_success.html', total_amount=total_amount)
-
+        db.session.commit()
+        return redirect(url_for('success_page'))
+    
     except stripe.error.StripeError as e:
-        # Display payment error page
-        return render_template('payment_error.html', error_message=str(e))
-
+        # Handle the Stripe error
+        db.session.rollback()
+        return str(e), 403
+    
+    except Exception as e:
+        # Handle other exceptions
+        db.session.rollback()
+        return str(e), 500
+    
 
 @app.route('/process_payment', methods=['POST'])
 def process_payment():
