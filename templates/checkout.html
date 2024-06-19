@@ -126,7 +126,7 @@
                         </div>
                         <div class="form-group col-md-2">
                             <label for="shipping_zip">Zip</label>
-                            <input type="text" class="form-control" id="shipping_zip" name="shipping_zip" value="{{ user.shipping_zip }}" required>
+                            <input type="text" class="form-control" id="shipping_zip" name="shipping_zip" value="{{ user.shipping_zip }}">
                         </div>
                     </div>
                     <div class="form-group">
@@ -140,89 +140,91 @@
                         </div>
                         <div class="card-body">
                             <div class="form-row">
-                                <div id="card-element" class="StripeElement">
                                 <script src="https://checkout.stripe.com/checkout.js" class="stripe-button"
                                 data-key="pk_test_51PJPlI098w1868DgStq59Ol9oGjPuVzf9Gi8w1aSa3UFFPU4gtKoum5KPA2DymTGWGHDh1p6Hb1JoIrVUb3CsBV700mRl7AgzB"
                                 data-description="PhonesForYou"
-                                data-amount="{{ total_amount * 100 }}"   
                                 data-locale="auto"></script>
                             </div>
-                            <!-- Used to display form errors. -->
-                            <div id="card-errors" role="alert" class="error-message"></div>
+                                <!-- Used to display form errors. -->
+                                <div id="card-errors" role="alert" class="error-message"></div>
+                            </div>
+                            <!-- Hidden input field for total_amount -->
+                            <input type="hidden" name="total_amount" id="total_amount" value="{{ total_amount }}">
                         </div>
-                        <!-- Hidden input field for total_amount -->
-                        <input type="hidden" name="total_amount" id="total_amount" value="{{ total_amount }}">
-                        <button type="submit" class="btn btn-primary mt-3" id="submit-btn">Place Order</button>
                     </div>
-                </div>
-            </form>
+
+                    <button id="complete-order" class="btn btn-primary mt-3">Complete Order</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="mt-4">
+            <a href="/user-home" class="btn btn-secondary btn-black">Back to Shopping</a>
         </div>
     </div>
 
-    <div class="mt-4">
-        <a href="/user-home" class="btn btn-secondary btn-black">Back to Shopping</a>
-    </div>
-</div>
-
-<script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"></script>
-<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
-<script src="https://js.stripe.com/v3/"></script>
-<script>
-    var style = {
-        base: {
-            fontSize: '16px',
-            color: '#32325d',
-            fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
-            '::placeholder': {
-                color: '#aab7c4',
+    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
+    <script src="https://js.stripe.com/v3/"></script>
+    <script>
+        var stripe = Stripe('pk_test_51PJPlI098w1868DgStq59Ol9oGjPuVzf9Gi8w1aSa3UFFPU4gtKoum5KPA2DymTGWGHDh1p6Hb1JoIrVUb3CsBV700mRl7AgzB');
+        var elements = stripe.elements();
+        var style = {
+            base: {
+                fontSize: '16px',
+                color: '#32325d',
+                fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
+                '::placeholder': {
+                    color: '#aab7c4',
+                },
             },
-        },
-        invalid: {
-            color: '#fa755a',
-            iconColor: '#fa755a',
-        },
-    };
+            invalid: {
+                color: '#fa755a',
+                iconColor: '#fa755a',
+            },
+        };
+        var card = elements.create('card', {style: style});
 
-    var stripe = Stripe('pk_test_51PJPlI098w1868DgStq59Ol9oGjPuVzf9Gi8w1aSa3UFFPU4gtKoum5KPA2DymTGWGHDh1p6Hb1JoIrVUb3CsBV700mRl7AgzB');
-    var elements = stripe.elements();
-    var card = elements.create('card', { style: style });
-    card.mount('#card-element');
+        card.mount('#card-element');
 
-    card.on('change', function(event) {
-        var displayError = document.getElementById('card-errors');
-        if (event.error) {
-            displayError.textContent = event.error.message;
-        } else {
-            displayError.textContent = '';
-        }
-    });
-
-    var form = document.getElementById('payment-form');
-
-    form.addEventListener('submit', function(event) {
-        event.preventDefault();
-
-        stripe.createToken(card).then(function(result) {
-            if (result.error) {
-                var errorElement = document.getElementById('card-errors');
-                errorElement.textContent = result.error.message;
+        card.on('change', function(event) {
+            var displayError = document.getElementById('card-errors');
+            if (event.error) {
+                displayError.textContent = event.error.message;
             } else {
-                stripeTokenHandler(result.token);
+                displayError.textContent = '';
             }
         });
-    });
 
-    function stripeTokenHandler(token) {
         var form = document.getElementById('payment-form');
-        var hiddenInput = document.createElement('input');
-        hiddenInput.setAttribute('type', 'hidden');
-        hiddenInput.setAttribute('name', 'stripeToken');
-        hiddenInput.setAttribute('value', token.id);
-        form.appendChild(hiddenInput);
+        var completeButton = document.getElementById('complete-order');
 
-        form.submit();
-    }
-</script>
+        form.addEventListener('submit', function(event) {
+            event.preventDefault();
+            completeButton.disabled = true;
+
+            stripe.createToken(card).then(function(result) {
+                if (result.error) {
+                    var errorElement = document.getElementById('card-errors');
+                    errorElement.textContent = result.error.message;
+                    completeButton.disabled = false;
+                } else {
+                    stripeTokenHandler(result.token);
+                }
+            });
+        });
+
+        function stripeTokenHandler(token) {
+            var form = document.getElementById('payment-form');
+            var hiddenInput = document.createElement('input');
+            hiddenInput.setAttribute('type', 'hidden');
+            hiddenInput.setAttribute('name', 'stripeToken');
+            hiddenInput.setAttribute('value', token.id);
+            form.appendChild(hiddenInput);
+
+            form.submit();
+        }
+    </script>
 </body>
 </html>

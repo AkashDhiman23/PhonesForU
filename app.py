@@ -7,12 +7,15 @@ from flask_migrate import Migrate
 from sqlalchemy.orm import Session
 from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
-from model import ProductCategory, ProductList, db, User, MerchantUser, Cart, PaymentRecord
+from model import ProductCategory, ProductList, db, User, MerchantUser, Cart, Order, Payment, OrderItem
 from sqlalchemy.sql.expression import func
 from datetime import datetime as dt
-from datetime import datetime
+from datetime import datetime,timezone
 import json
 import stripe
+from sqlalchemy.orm import Session
+from sqlalchemy.orm import scoped_session, sessionmaker
+
 
 
 app = Flask(__name__)
@@ -27,6 +30,7 @@ app.config['STATIC_FOLDER'] = 'static'
 # Initialize SQLAlchemy and Flask-Migrate
 db.init_app(app)
 migrate = Migrate(app, db)
+
 
 # Folder configuration for product images
 app.config['PRODUCT_IMAGE_UPLOAD_FOLDER'] = 'static/img/product_images/'
@@ -62,7 +66,13 @@ def get_file_extension(filename):
 
 
 def get_random_products(limit):
-    return ProductList.query.order_by(func.random()).limit(limit).all()
+    try:
+        random_products = ProductList.query.order_by(func.random()).limit(limit).all()
+        return random_products
+    except Exception as e:
+        # Log the exception for debugging purposes
+        print(f"Error fetching random products: {str(e)}")
+        return None
 
 
 def calculate_total_price(cart):
@@ -84,9 +94,10 @@ def index():
     try:
         random_products = get_random_products(6)
         categories = ProductCategory.query.all()
-        # Ensure cart is defined
-        cart = session.get('cart', [])
+        cart = session.get('cart', [])  # Ensure cart is defined
+        
         return render_template('index.html', random_products=random_products, categories=categories, cart=cart)
+    
     except Exception as e:
         print(f"An error occurred: {e}")
         return render_template('error.html', message="An error occurred while loading the page.")
@@ -586,30 +597,196 @@ def update_cart_item():
     }), 200
 
 
-
-@app.route('/checkout')
-def checkout():
-    # Check if user is logged in
-    if 'name' not in session:
-        return redirect(url_for('login'))  # Redirect to login page if user is not logged in
+# @app.route('/payment', methods=['POST'])
+# def payment():
+#     # Retrieve form data
+#     stripe_token = request.form.get('stripeToken')
+#     total_amount = request.form.get('total_amount')
+#     shipping_address = request.form.get('shipping_address')
+#     shipping_city = request.form.get('shipping_city')
+#     shipping_state = request.form.get('shipping_state')
+#     shipping_zip = request.form.get('shipping_zip')
+#     shipping_country = request.form.get('shipping_country')
     
-    user_id = session['name']
+#     user_id = session.get('name')
+#     user = User.query.get(user_id)
+
+#     if not user:
+#         flash("User not found.", "danger")
+#         return redirect(url_for('checkout'))
+
+#     # Retrieve cart items
+#     cart_items = Cart.query.filter_by(user_id=user_id).all()
+#     if not cart_items:
+#         flash("No items in cart.", "danger")
+#         return redirect(url_for('checkout'))
+
+#     try:
+#         # Create a Stripe charge
+#         charge = stripe.Charge.create(
+#             amount=int(float(total_amount) * 100),  # Amount in cents
+#             currency='nzd',
+#             description='Purchase from PhonesForYou',
+#             source=stripe_token,
+#         )
+
+#         # Save payment record
+#         for item in cart_items:
+#             payment_record = PaymentRecord(
+#                 transaction_id=charge['id'],
+#                 user_id=user.user_id,
+#                 user_first_name=user.user_firstname,
+#                 user_last_name=user.user_lastname,
+#                 user_email_address=user.email_address,
+#                 user_mobile=user.mobile,
+#                 product_id=item.product.id if item.product else None,
+#                 product_name=item.product.product_name if item.product else "Product not available",
+#                 product_price=item.product.product_price if item.product else 0,
+#                 product_quantity=item.quantity,
+#                 shipping_address=shipping_address,
+#                 shipping_city=shipping_city,
+#                 shipping_state=shipping_state,
+#                 shipping_zip=shipping_zip,
+#                 shipping_country=shipping_country,
+#                 total_amount=total_amount,
+#                 transaction_date=datetime.utcnow()
+#             )
+#             db.session.add(payment_record)
+
+#         # Clear the cart
+#         for item in cart_items:
+#             db.session.delete(item)
+
+#         db.session.commit()
+
+#         flash("Payment successful!", "success")
+#         return redirect(url_for('user_home'))
+
+#     except stripe.error.StripeError as e:
+#         # Handle Stripe errors
+#         flash(f"Payment error: {e.user_message}", "danger")
+#         return redirect(url_for('checkout'))
+
+#     except Exception as e:
+#         # Handle other errors
+#         db.session.rollback()
+#         flash(f"An error occurred: {e}", "danger")
+#         return redirect(url_for('checkout'))
+
+
+@app.route('/checkout', methods=['GET'])
+def checkout():
+    # Replace with your session management code to retrieve user and cart data
+    user_id = session.get('user_id')
     user = User.query.get(user_id)
-
-    if not user:
-        return "User not found"  # Handle case where user does not exist (optional)
-
-    # Retrieve cart items for the current user
     cart_items = Cart.query.filter_by(user_id=user_id).all()
 
-    # Calculate total price from cart items
-    total_amount = sum(item.product.product_price * item.quantity if item.product else 0 for item in cart_items)
-    
-    # Assuming STRIPE_PUBLIC_KEY is defined in your Flask app configuration
-    stripe_public_key = app.config["STRIPE_PUBLIC_KEY"]
+    # Calculate total amount
+    total_amount = sum(item.product.product_price * item.quantity for item in cart_items)
 
-    return render_template('checkout.html', user=user, cart_items=cart_items, total_amount=total_amount, stripe_public_key=stripe_public_key)
-     
+    return render_template('checkout.html', user=user, cart_items=cart_items, total_amount=total_amount, stripe_public_key='your_stripe_public_key')
+
+@app.route('/payment', methods=['POST'])
+def payment():
+    try:
+        # Retrieve form data
+        stripe_token = request.form.get('stripeToken')
+        shipping_address = request.form.get('shipping_address')
+        shipping_city = request.form.get('shipping_city')
+        shipping_state = request.form.get('shipping_state')
+        shipping_zip = request.form.get('shipping_zip')
+        shipping_country = request.form.get('shipping_country')
+        user_id = session.get('user_id')  # Replace with your session management code
+        
+        # Validate form data
+        if not (stripe_token and shipping_address and shipping_city and shipping_state and shipping_country and user_id):
+            return jsonify({"error": "Incomplete form data"}), 400
+
+        # Check for duplicate transactions based on stripe_token
+        existing_transaction = Payment.query.filter_by(transaction_id=stripe_token).first()
+        if existing_transaction:
+            return jsonify({"error": "Duplicate transaction"}), 400
+
+        # Retrieve user details
+        user = User.query.get(user_id)
+        if not user:
+            return jsonify({"error": "User not found"}), 404
+
+        # Retrieve cart items
+        cart_items = Cart.query.filter_by(user_id=user_id).all()
+        if not cart_items:
+            return jsonify({"error": "No items in cart"}), 400
+
+        # Calculate total amount
+        total_amount = sum(item.product.product_price * item.quantity for item in cart_items)
+
+        # Process payment with Stripe
+        charge = stripe.Charge.create(
+            amount=int(total_amount * 100), 
+            currency='NZD',  
+            description='Payment for order',
+            source=stripe_token
+        )
+
+        # Ensure the charge ID is unique
+        transaction_id = charge.id
+        existing_transaction = Payment.query.filter_by(transaction_id=transaction_id).first()
+        if existing_transaction:
+            return jsonify({"error": "Duplicate transaction after charge creation"}), 400
+
+        # Create Order record
+        order = Order(
+            user_id=user_id,
+            user_first_name=user.user_firstname,
+            user_last_name=user.user_lastname,
+            user_email_address=user.email_address,
+            user_mobile=user.mobile,
+            shipping_address=shipping_address,
+            shipping_city=shipping_city,
+            shipping_state=shipping_state,
+            shipping_zip=shipping_zip,
+            shipping_country=shipping_country,
+            total_amount=total_amount,
+            order_date=datetime.utcnow()
+        )
+        db.session.add(order)
+        db.session.flush()  # Flush to get the order ID
+
+        # Create OrderItems
+        for item in cart_items:
+            order_item = OrderItem(
+                order_id=order.order_id,
+                product_id=item.product.id,
+                product_name=item.product.product_name,
+                product_price=item.product.product_price,
+                product_quantity=item.quantity,
+            )
+            db.session.add(order_item)
+
+        # Create Payment record
+        payment_record = Payment(
+            transaction_id=transaction_id,
+            order_id=order.order_id,
+            transaction_date=datetime.utcnow(),
+            total_amount=total_amount
+        )
+        db.session.add(payment_record)
+        
+        # Clear the user's cart
+        Cart.query.filter_by(user_id=user_id).delete()
+
+        db.session.commit()
+
+        return jsonify({"message": "Payment successful", "order_id": order.order_id}), 200
+
+    except stripe.error.StripeError as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 403
+    
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
+
 @app.route('/place-order', methods=['POST'])
 def place_order():
     # Fetch form data
@@ -625,73 +802,6 @@ def place_order():
     # Redirect to a confirmation page or handle further actions
     return redirect(url_for('order_confirmation'))
 
-@app.route('/payment', methods=['POST'])
-def payment():
-    try:
-        # Retrieve form data
-        stripe_token = request.form['stripeToken']
-        total_amount = float(request.form['total_amount'])
-        currency = 'NZD'
-        shipping_address = request.form['shipping_address']
-        shipping_city = request.form['shipping_city']
-        shipping_state = request.form['shipping_state']
-        shipping_zip = request.form['shipping_zip']
-        shipping_country = request.form['shipping_country']
-        
-        # Process payment with Stripe
-        charge = stripe.Charge.create(
-            amount=int(total_amount * 100),  # Amount in cents
-            currency=currency,
-            description='Example charge',
-            source=stripe_token
-        )
-
-        user_id = session['user_id']
-        user = User.query.get(user_id)
-
-        # Retrieve all cart items for the user
-        cart_items = Cart.query.filter_by(user_id=user_id).all()
-
-        # Process each item in retrieved cart items
-        for item in cart_items:
-            product = ProductList.query.get(item.product_id)
-            payment_record = PaymentRecord(
-                transaction_id=charge.id,
-                user_id=user.user_id,
-                user_first_name=user.user_firstname,
-                user_last_name=user.user_lastname,
-                user_email_address=user.email_address,
-                user_mobile=user.mobile,
-                product_id=product.id,
-                product_name=product.product_name,
-                product_price=product.product_price,
-                product_quantity=item.quantity,
-                shipping_address=shipping_address,
-                shipping_city=shipping_city,
-                shipping_state=shipping_state,
-                shipping_zip=shipping_zip,
-                shipping_country=shipping_country,
-                total_amount=total_amount,
-                transaction_date=datetime.utcnow()  # Assuming you want current datetime
-            )
-            db.session.add(payment_record)
-
-        # Clear the user's cart after successful payment
-        Cart.query.filter_by(user_id=user_id).delete()
-
-        db.session.commit()
-        return redirect(url_for('success_page'))
-    
-    except stripe.error.StripeError as e:
-        # Handle the Stripe error
-        db.session.rollback()
-        return str(e), 403
-    
-    except Exception as e:
-        # Handle other exceptions
-        db.session.rollback()
-        return str(e), 500
-    
 
 @app.route('/process_payment', methods=['POST'])
 def process_payment():
@@ -730,7 +840,6 @@ def process_payment():
     except Exception as e:
         # Something else happened, completely unrelated to Stripe
         return jsonify({'error': 'Unknown error'})
-
 
 
 
