@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="UTF-8">
+    <title> Registration Form </title>
+    <link rel="stylesheet" href="style.css">
+     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@200&display=swap" rel="stylesheet">
+     <!-- Bootstrap CSS -->
+      <link rel='stylesheet' href='https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.1.2/css/bootstrap.min.css'>
+      <link rel="stylesheet" href="{{ url_for('static', filename='css/form.css') }}">
+
+   </head>
+<body  style="background-image: url(static/img/Background.jpg)">
+
+  {% include 'admin_navbar.html' %}
+   <!-- Container for the signup form -->
+   <div class="container">
+    <div class="title">Create a new Account</div>
+    <div class="content">
+      <!-- Signup form -->
+      <form id="signup-form" method="POST" action="/signupmerchant">
+        <div class="user-details">
+          <div class="input-box">
+            <span class="details">First Name</span>
+            <input type="text" name="firstname" placeholder="Enter First name" required>
+          </div>
+          <div class="input-box">
+            <span class="details">Last Name</span>
+            <input type="text" name="lastname" placeholder="Enter Last name" required>
+          </div>
+          <div class="input-box">
+            <span class="details">Company Registration No.</span>
+            <input type="text" name="companyregisterno" placeholder="Enter Company Registration Number" required>
+          </div>
+          <div class="input-box">
+            <span class="details">Company Email address</span>
+            <input type="email" name="email" placeholder="Enter Company Email address" required>
+          </div>
+          <div class="input-box">
+            <span class="details">Company Address</span>
+            <input type="text" name="companyaddress" placeholder="Enter Company address" required>
+          </div>
+          <div class="input-box">
+            <span class="details">Company postcode</span>
+            <input type="text" name="companypostcode" placeholder="Enter Company postcode" required>
+          </div>
+          <div class="input-box">
+            <span class="details">Company Phone number</span>
+            <input type="text" name="mobile" placeholder="Enter Company phone number" required>
+          </div>
+          <div class="input-box">
+            <span class="details">Password *</span>
+            <input type="password" name="password" placeholder="Enter Password" required>
+          </div>
+        </div>
+        <!-- Submit button -->
+        <button type="submit" class="btn btn-info btn-block btn-round" style="background-color: black; color: white;">Signup</button>
+      </form>
+      <!-- Signup feedback message -->
+      <div id="signup-message" class="text-danger"></div>
+      <!-- Login link -->
+      <div class="modal-footer d-flex justify-content-center">
+        <div class="signup-section">Already a member? <a href="/admin" class="text-sucess" >Login</a>.</div>
+      </div>
+    </div>
+  </div>
+
+<!-- jQuery -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<!-- Bootstrap JS -->
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js"></script>
+<!-- Your custom JavaScript -->
+<script>
+  // AJAX for signup form submission
+  $('#signup-form').submit(function(e) {
+    e.preventDefault();
+    $.ajax({
+      url: '/signupmerchant',
+      type: 'POST',
+      data: $(this).serialize(),
+      success: function(response) {
+        $('#signup-message').text(response.message).removeClass('text-danger').addClass('text-success');
+      },
+      error: function(xhr, status, error) {
+        $('#signup-message').text("Error: " + xhr.responseJSON.message).removeClass('text-success').addClass('text-danger');
+      }
+    });
+  });
+</script>
+</body>
+</html>

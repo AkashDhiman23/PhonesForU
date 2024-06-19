@@ -14,7 +14,7 @@ from datetime import datetime as dt
 import json
 from fastapi.encoders import jsonable_encoder
 
-app = Flask(__name__, static_url_path='/static')
+app = Flask(__name__)
 
 app.config['SQLALCHEMY_DATABASE_URI'] = "postgresql://postgres:dhiman223@localhost:5432/ecommercedb"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
@@ -55,14 +55,26 @@ def get_random_products(limit):
 # Routes
 @app.route('/')
 def index():
-     # Query the database to get all product categories
-  
-    random_products = get_random_products(6)  # Fetch 6 random products
-    categories = ProductCategory.query.all()
-    print(random_products)
-    for product in random_products:
-        print(product.product_main_image)
-    return render_template('index.html', random_products=random_products, categories=categories)
+    try:
+        random_products = get_random_products(6)
+        categories = ProductCategory.query.all()
+        if not categories:
+            print("No categories found.")
+        else:
+            print(f"Categories found: {[category.product_category_name for category in categories]}")
+        if not random_products:
+            print("No random products found.")
+        else:
+            for product in random_products:
+                print(f"Random Product: {product.product_main_image}")
+        
+        # Render the index template with the fetched data
+        return render_template('index.html', random_products=random_products, categories=categories)
+    
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        return render_template('error.html', message="An error occurred while loading the page.")
+
 
 # Function to check if a file has an allowed extension
 def allowed_file(filename):
@@ -158,9 +170,20 @@ def loginmerchant():
 
     userMerchant = MerchantUser.query.filter_by(company_emailaddress=email).first()
     if not userMerchant or not check_password_hash(userMerchant.company_password_hash, password):
-        return jsonify({'message': 'Invalid email or password'}), 401
+        return jsonify({'message': 'Invalid email or password', 'success': False}), 401
+    else:
+        userMerchant = jsonable_encoder(userMerchant)
+        session["merchant_name"] = userMerchant["company_id"]
+        session["merchant_user_info"] = userMerchant
+        return jsonify({'message': 'Logged in successfully', 'success': True}), 200
+    
+@app.route('/logoutmerchant')
+def logout_merchant():
+    if session.get("merchant_name") is not None:
+        session.pop('merchant_name', None)
+        session.pop('merchant_user_info', None)  # Change this to match the session key for merchant user info
+    return redirect("/admin", code=302)
 
-    return jsonify({'message': 'Logged in successfully'}), 200
 
 @app.route('/addnewcategory', methods=['GET','POST'])
 def product_category():
@@ -321,14 +344,14 @@ def viewproducts(category_id):
 @app.route('/edit_product/<int:product_id>', methods=['GET', 'POST'])
 def edit_product(product_id):
     try:
-        # Fetch the product from the database using session.get
-        product = db.session.get(ProductList, product_id)
+        # Fetch the product from the database
+        product = ProductList.query.get(product_id)
         if not product:
             flash('Product not found!', 'error')
             return redirect(url_for('viewproducts', category_id=product.category_id))
 
-        # Fetch the product category using session.get
-        product_category = db.session.get(ProductCategory, product.category_id)
+        # Fetch the product category
+        product_category = ProductCategory.query.get(product.category_id)
 
         if request.method == 'POST':
             # Retrieve form data
@@ -339,32 +362,6 @@ def edit_product(product_id):
             product.product_price = float(request.form['product_price'])
             product.product_quantity = int(request.form['product_quantity'])
 
-            # Handle main product image upload
-            if 'product_main_image' in request.files:
-                product_main_image = request.files['product_main_image']
-                if product_main_image and product_main_image.filename != '':
-                    main_image_path = save_file(product_main_image, app.config['PRODUCT_IMAGE_UPLOAD_FOLDER'])
-                    if main_image_path:
-                        print(f"Updating main image path to {main_image_path}")
-                        product.product_main_image = main_image_path
-
-            # Handle secondary product images uploads
-            if 'product_secondary_image1' in request.files:
-                product_secondary_image1 = request.files['product_secondary_image1']
-                if product_secondary_image1 and product_secondary_image1.filename != '':
-                    secondary_image1_path = save_file(product_secondary_image1, app.config['PRODUCT_IMAGE_UPLOAD_FOLDER'])
-                    if secondary_image1_path:
-                        print(f"Updating secondary image 1 path to {secondary_image1_path}")
-                        product.product_secondary_image1 = secondary_image1_path
-
-            if 'product_secondary_image2' in request.files:
-                product_secondary_image2 = request.files['product_secondary_image2']
-                if product_secondary_image2 and product_secondary_image2.filename != '':
-                    secondary_image2_path = save_file(product_secondary_image2, app.config['PRODUCT_IMAGE_UPLOAD_FOLDER'])
-                    if secondary_image2_path:
-                        print(f"Updating secondary image 2 path to {secondary_image2_path}")
-                        product.product_secondary_image2 = secondary_image2_path
-
             # Commit changes to the database
             db.session.commit()
             flash('Product updated successfully!', 'success')
@@ -374,16 +371,9 @@ def edit_product(product_id):
         print(f"An error occurred: {e}")
         flash('An error occurred while updating the product. Please try again.', 'error')
 
-    # Prepend slash to image paths for correct display in templates
-    if product.product_main_image:
-        product.product_main_image = '/' + product.product_main_image
-    if product.product_secondary_image1:
-        product.product_secondary_image1 = '/' + product.product_secondary_image1
-    if product.product_secondary_image2:
-        product.product_secondary_image2 = '/' + product.product_secondary_image2
-
     # Render the edit_product.html template with the product and product category
     return render_template('edit_product.html', product=product, product_category=product_category)
+
 
 
 @app.route('/productdescription.html')

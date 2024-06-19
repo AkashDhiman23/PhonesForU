@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shopping Cart</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
+    <style>
+        /* Adjust the width and styles as needed */
+        .quantity {
+            text-align: center;
+        }
+
+        .input-group-prepend, .input-group-append {
+            width: 35px; /* Adjust button width */
+        }
+
+        .btn-minus, .btn-plus {
+            width: 35px; /* Adjust button width */
+        }
+    </style>
+</head>
+<body>
+
+<div class="container mt-4">
+    <div class="row justify-content-end mb-4">
+        <div class="col-md-4 text-right">
+            <a href="/logout" class="btn btn-danger">Logout</a>
+        </div>
+    </div>
+    
+    <h2>Your Cart</h2>
+    <div class="row">
+        <div class="col-md-12">
+            <div class="list-group">
+                {% for item in cart %}
+                    <div class="list-group-item">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <img src="{{ item.product_main_image }}" alt="{{ item.product_title }}" width="100" class="mr-3">
+                            </div>
+                            <div class="col-md-9">
+                                <h5 class="mb-1">{{ item.product_name }}</h5>
+                                <p class="mb-1" id="item-{{ item.product_id }}-price">Price: {{ item.product_price }} NZD</p>
+                                <div class="input-group mb-3">
+                                    <div class="input-group-prepend">
+                                        <button class="btn btn-outline-secondary btn-minus" type="button" data-item="{{ item.product_id }}">-</button>
+                                    </div>
+                                    <input type="text" class="form-control quantity" value="{{ item.quantity }}" readonly>
+                                    <div class="input-group-append">
+                                        <button class="btn btn-outline-secondary btn-plus" type="button" data-item="{{ item.product_id }}">+</button>
+                                    </div>
+                                </div>
+                                <span class="item-total" id="item-{{ item.product_id }}-total">Total: {{ item.item_total_price }} NZD</span>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    <div class="row mt-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Order Summary</h5>
+                    <p class="card-text">Total Items: {{ total_quantity }}</p>
+                    <h4 class="card-text" id="total-price">Total Price: {{ total_price }}</h4>
+                    <a href="/checkout" class="btn btn-primary">Proceed to Checkout</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // JavaScript to handle quantity adjustment and total price update
+    $(document).ready(function() {
+        $(".btn-plus").click(function() {
+            var item_id = $(this).data("item");
+            var quantity_field = $(this).closest(".input-group").find(".quantity");
+            var current_quantity = parseInt(quantity_field.val());
+            var new_quantity = current_quantity + 1;
+            quantity_field.val(new_quantity);
+            updateItemTotal(item_id, new_quantity);
+            updateTotalPrice();
+        });
+
+        $(".btn-minus").click(function() {
+            var item_id = $(this).data("item");
+            var quantity_field = $(this).closest(".input-group").find(".quantity");
+            var current_quantity = parseInt(quantity_field.val());
+            var new_quantity = current_quantity - 1;
+            if (new_quantity >= 1) {
+                quantity_field.val(new_quantity);
+                updateItemTotal(item_id, new_quantity);
+                updateTotalPrice();
+            }
+        });
+
+        function updateItemTotal(item_id, quantity) {
+            // Update the displayed total price for the item
+            var unit_price = parseFloat($("#item-" + item_id + "-price").text().replace("Price: ", "").replace(" NZD", ""));
+            var new_item_total_price = unit_price * quantity;
+            $("#item-" + item_id + "-total").text("Total: " + new_item_total_price.toFixed(2) + " NZD");
+        }
+
+        function updateTotalPrice() {
+            // Update the total price in the order summary
+            var total_price = 0;
+            $(".item-total").each(function() {
+                var item_total_price = parseFloat($(this).text().replace("Total: ", "").replace(" NZD", ""));
+                total_price += item_total_price;
+            });
+            $("#total-price").text("Total Price: " + total_price.toFixed(2) + " NZD");
+        }
+    });
+</script>
+
+</body>
+</html>

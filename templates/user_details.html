@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Details</title>
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css">
+    <!-- Font Awesome CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/user.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    
+{% include 'user_navbar.html' %}
+
+<div class="main d-flex">
+    <div class="navbar">
+        <ul class="nav">
+            <li><a href="{{ url_for('change_password', user_id=session.get('name')) }}">Change Password</a></li>
+            <li><a href="{{ url_for('user_details', user_id=session.get('name')) }}">My Details</a></li> 
+            <li><a href="#">My Orders</a></li>
+            <li><a href="/logout">Logout</a></li>
+        </ul>
+    </div>
+    <div class="container">
+        <div class="row">
+            <div class="col-md-10 main-content align-items-center justify-content-center" style="margin-left: 200px;">
+                <div class="col-xl-7 col-lg-8 col-md-9 col-11 text-center">
+                    <h3>My Account Details</h3>
+                    <div class="cards">
+                        <form class="form-card" id="edit_Form" method="POST" action="{{ url_for('user_details', user_id=user.user_id) }}">
+                            <div class="form-group">
+                                <input type="text" class="form-control" name="firstname" placeholder="Enter First name" value="{{ user.user_firstname }}" disabled>
+                            </div>
+                            <div class="form-group">
+                                <input type="text" class="form-control" name="lastname" placeholder="Enter Last name" value="{{ user.user_lastname }}" disabled>
+                            </div>
+                            <div class="form-group">
+                                <input type="email" class="form-control" name="email" placeholder="Enter Email address" value="{{ user.email_address }}" disabled>
+                            </div>
+                            <div class="form-group">
+                                <input type="text" class="form-control" name="mobile" placeholder="Enter phone number" value="{{ user.mobile }}" disabled>
+                            </div>
+                            <!-- Save Changes button -->
+                            <button type="submit" class="btn btn-primary" id="saveButton" disabled>Save Changes</button>
+                            <!-- Edit button -->
+                            <button type="button" class="btn btn-secondary" id="editButton">Edit</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+<!-- Success message modal -->
+<div class="modal fade" id="successModal" tabindex="-1" role="dialog" aria-labelledby="successModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="successModalLabel">Success</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                Your changes have been saved successfully.
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- jQuery -->
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<!-- Bootstrap JS -->
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
+<!-- Custom JavaScript -->
+<script>
+     // Function to toggle input field disable/enable
+     function toggleInputs(enable) {
+        var inputs = document.querySelectorAll('input[type="text"], input[type="email"]');
+        inputs.forEach(function(input) {
+            input.disabled = !enable;
+        });
+        // Toggle the disabled attribute of the buttons
+        document.getElementById('saveButton').disabled = !enable;
+    }
+
+    // Add event listener to the "Edit" button
+    document.getElementById('editButton').addEventListener('click', function() {
+        toggleInputs(true);
+    });
+
+    // Show success message after form submission
+    $('#edit_Form').on('submit', function(event) {
+        event.preventDefault(); // Prevent default form submission
+        
+        // Submit the form via AJAX
+        $.ajax({
+            type: 'POST',
+            url: $(this).attr('action'),
+            data: new FormData(this),
+            processData: false,
+            contentType: false,
+            success: function(response) {
+                // Show success modal
+                $('#successModal').modal('show');
+                // Disable input fields after successful submission
+                toggleInputs(false);
+            },
+            error: function(response) {
+                alert('An error occurred. Please try again.');
+            }
+        });
+    });
+</script>
+</body>
+</html>

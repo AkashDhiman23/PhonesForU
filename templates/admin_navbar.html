@@ -1,0 +1,19 @@
+<nav>
+    <input type="checkbox" id="nav-toggle">
+    <div class="logo"><img src="{{ url_for('static', filename='img/logo.png') }}" alt="Logo"></div>
+    <ul class="links">
+        {% if session.get('merchant_name') %}
+        <li><a href="{{ url_for('logout_merchant') }}">Logout</a></li>
+        {% elif session.get('name') %}
+        <li><a href="{{ url_for('logout') }}">Logout</a></li>
+        {% else %}
+        <li><a href="#" data-toggle="modal" data-target="#loginModal">Login</a></li>
+        <li><a href="#" data-toggle="modal" data-target="#signupModal">Signup</a></li>
+        {% endif %}
+    </ul>
+    <label for="nav-toggle" class="icon-burger">
+        <div class="line"></div>
+        <div class="line"></div>
+        <div class="line"></div>
+    </label>
+</nav>

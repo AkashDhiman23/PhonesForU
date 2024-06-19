@@ -217,3 +217,31 @@ nav .icon-burger .line {
     max-height: 400px; /* Adjust the height as needed */
     margin: auto; /* Center the image */
 }
+
+/* Media query for small screens */
+@media screen and (max-width: 768px) {
+    .logo img {
+        display: none; /* Hide the image logo on small screens */
+    }
+    
+    nav .links {
+        display: none; /* Hide the links by default on small screens */
+        position: absolute;
+        top: 80px;
+        left: 0;
+        width: 100%;
+        background-color: #040404; /* Set background color */
+        padding: 20px;
+        box-sizing: border-box; /* Include padding in width */
+        flex-direction: column; /* Align links vertically */
+        z-index: 9; /* Ensure links are above other content */
+    }
+
+    nav .links.show {
+        display: flex; /* Show the links when .show class is added */
+    }
+    
+    nav .icon-burger {
+        display: block; /* Show the burger icon on small screens */
+    }
+}

@@ -10,23 +10,12 @@
     <link rel="stylesheet" href="static\css\style.css">
 </head>
 <body>
-    <nav>
-        <input type="checkbox" id="nav-toggle">
-        <div class="logo"><img src="static\img\logo.png" alt="Logo"></div>
-        <ul class="links">
-            <li>
-                <a href="#" data-toggle="modal" data-target="#loginModal">Login</a>
-            </li>
-            <li>
-                <a href="#" data-toggle="modal" data-target="#signupModal">Signup</a>
-            </li>
-        </ul>
-        <label for="nav-toggle" class="icon-burger">
-            <div class="line"></div>
-            <div class="line"></div>
-            <div class="line"></div>
-        </label>
-    </nav>
+    {% include 'user_navbar.html' %}
+
+
+<!-- Debugging: Print categories to the page -->
+<p>Debug: {{ categories }}</p>
+
 
     <!-- Login Modal -->
     <div class="modal fade" id="loginModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">

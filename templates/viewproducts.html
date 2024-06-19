@@ -12,20 +12,7 @@
    
 </head>
 <body>
-    <nav>
-        <input type="checkbox" id="nav-toggle">
-        <div class="logo"><img src="{{ url_for('static', filename='img/logo.png') }}" alt="Logo"></div>
-        <ul class="links">
-            <li>
-                <a href="#" onclick="confirmLogout()">Logout</a>
-            </li>
-        </ul>
-        <label for="nav-toggle" class="icon-burger">
-            <div class="line"></div>
-            <div class="line"></div>
-            <div class="line"></div>
-        </label>
-    </nav>
+    {% include 'admin_navbar.html' %}
 
     <div class="container">
         <div class="table-responsive" style="margin-top: 100px;">
