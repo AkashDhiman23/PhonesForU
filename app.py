@@ -17,6 +17,10 @@ from sqlalchemy.orm import Session
 from sqlalchemy.orm import scoped_session, sessionmaker
 
 
+<<<<<<< HEAD
+app = Flask(__name__)
+=======
+>>>>>>> 412d718559c1385e21b63127b4050ddf43d3ff99
 
 app = Flask(__name__)
 # Database configuration
@@ -94,10 +98,32 @@ def index():
     try:
         random_products = get_random_products(6)
         categories = ProductCategory.query.all()
+<<<<<<< HEAD
         cart = session.get('cart', [])  # Ensure cart is defined
         
         return render_template('index.html', random_products=random_products, categories=categories, cart=cart)
     
+=======
+<<<<<<< HEAD
+        if not categories:
+            print("No categories found.")
+        else:
+            print(f"Categories found: {[category.product_category_name for category in categories]}")
+        if not random_products:
+            print("No random products found.")
+        else:
+            for product in random_products:
+                print(f"Random Product: {product.product_main_image}")
+        
+        # Render the index template with the fetched data
+        return render_template('index.html', random_products=random_products, categories=categories)
+    
+=======
+        # Ensure cart is defined
+        cart = session.get('cart', [])
+        return render_template('index.html', random_products=random_products, categories=categories, cart=cart)
+>>>>>>> 412d718559c1385e21b63127b4050ddf43d3ff99
+>>>>>>> fe683e933b0f6e4fd41073cd36c7ec22e0cc2a73
     except Exception as e:
         print(f"An error occurred: {e}")
         return render_template('error.html', message="An error occurred while loading the page.")
@@ -241,10 +267,34 @@ def loginmerchant():
         userMerchant = jsonable_encoder(userMerchant)
         session["merchant_name"] = userMerchant["company_id"]
         session["merchant_user_info"] = userMerchant
+<<<<<<< HEAD
+        return jsonify({'message': 'Logged in successfully', 'success': True}), 200
+    
+@app.route('/logoutmerchant')
+def logout_merchant():
+    if session.get("merchant_name") is not None:
+        session.pop('merchant_name', None)
+        session.pop('merchant_user_info', None)  # Change this to match the session key for merchant user info
+    return redirect("/admin", code=302)
+
+
+@app.route('/addnewcategory', methods=['GET','POST'])
+def product_category():
+    if request.method == 'POST':
+        category_name = request.form['product_category_name']
+        category_code = request.form['product_category_code']
+        
+        new_category = ProductCategory(product_category_name=category_name, product_category_code=category_code)
+        db.session.add(new_category)
+        db.session.commit()
+        
+        return redirect(url_for('categories'))  # Redirect to a page after adding category
+=======
         session["merchant_firstname"] = userMerchant["firstname"]
         session["merchant_lastname"] = userMerchant["lastname"]
         return jsonify({'message': 'Logged in successfully', 'success': True}), 200
 
+>>>>>>> 412d718559c1385e21b63127b4050ddf43d3ff99
     
 @app.route('/logoutmerchant')
 def logout_merchant():

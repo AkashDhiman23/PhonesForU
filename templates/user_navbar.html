@@ -1,3 +1,10 @@
+<<<<<<< HEAD
+<nav>
+    <input type="checkbox" id="nav-toggle">
+    <div class="logo"><img src="{{ url_for('static', filename='img/logo.png') }}" alt="Logo"></div>
+    <ul class="links">
+        {% if session.name %}
+=======
 <!-- navbar.html -->
 <nav>
     <a href="/user-home">
@@ -5,17 +12,27 @@
     </a>
     <ul class="links">
         {% if session.get('name') %}
+>>>>>>> 412d718559c1385e21b63127b4050ddf43d3ff99
             <li><a href="/logout">Logout</a></li>
         {% else %}
             <li><a href="#" data-toggle="modal" data-target="#loginModal">Login</a></li>
             <li><a href="#" data-toggle="modal" data-target="#signupModal">Signup</a></li>
         {% endif %}
+<<<<<<< HEAD
+        <li><a href="/admin">Merchant</a></li>
+=======
+>>>>>>> 412d718559c1385e21b63127b4050ddf43d3ff99
         <!-- Dropdown for categories -->
         <li class="nav-item dropdown">
             <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                 Categories
             </a>
             <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+<<<<<<< HEAD
+                {% for category in categories %}
+                    <a class="dropdown-item category-link" href="/userproduct/{{ category.id }}">{{ category.product_category_name }}</a>
+                {% endfor %}
+=======
                 {% if categories %}
                     {% for category in categories %}
                         <a class="dropdown-item category-link" href="/userproduct/{{ category.id }}">{{ category.product_category_name }}</a>
@@ -65,6 +82,7 @@
                 {% endif %}
                 <div class="dropdown-divider"></div>
                 <a class="dropdown-item text-center" href="{{ url_for('user_cart', cart=session.get('cart', [])) }}">View Cart</a>
+>>>>>>> 412d718559c1385e21b63127b4050ddf43d3ff99
             </div>
         </li>
     </ul>
@@ -73,4 +91,8 @@
         <div class="line"></div>
         <div class="line"></div>
     </label>
+<<<<<<< HEAD
 </nav>
+=======
+</nav>
+>>>>>>> 412d718559c1385e21b63127b4050ddf43d3ff99
