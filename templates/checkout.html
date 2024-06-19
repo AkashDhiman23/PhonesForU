@@ -6,7 +6,10 @@
     <title>Checkout</title>
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
     <style>
+<<<<<<< HEAD
         /* Custom styles can be added here */
+=======
+>>>>>>> 412d718559c1385e21b63127b4050ddf43d3ff99
         .container {
             margin-bottom: 50px; 
         }
@@ -32,7 +35,10 @@
             color: white;
         }
 
+<<<<<<< HEAD
         /* Stripe Elements styles */
+=======
+>>>>>>> 412d718559c1385e21b63127b4050ddf43d3ff99
         .StripeElement {
             background-color: white;
             padding: 10px 12px;
@@ -55,7 +61,10 @@
             background-color: #fefde5 !important;
         }
 
+<<<<<<< HEAD
         /* Error message */
+=======
+>>>>>>> 412d718559c1385e21b63127b4050ddf43d3ff99
         .error-message {
             color: #fa755a;
             font-size: 14px;
@@ -113,7 +122,11 @@
                 Shipping Address
             </div>
             <div class="card-body">
+<<<<<<< HEAD
                 <form id="shipping-form" action="/process_shipping" method="POST">
+=======
+                <form id="payment-form" action="/payment" method="POST">
+>>>>>>> 412d718559c1385e21b63127b4050ddf43d3ff99
                     <div class="form-group">
                         <label for="shipping_address">Shipping Address</label>
                         <textarea class="form-control" id="shipping_address" name="shipping_address" rows="3" required>{{ user.shipping_address }}</textarea>
@@ -136,6 +149,7 @@
                         <label for="shipping_country">Country</label>
                         <input type="text" class="form-control" id="shipping_country" name="shipping_country" value="{{ user.shipping_country }}" required>
                     </div>
+<<<<<<< HEAD
                 </form>
             </div>
         </div>
@@ -249,3 +263,98 @@
 </body>
 </html>
 
+=======
+
+                    <div class="card mt-4">
+                        <div class="card-header">
+                            Payment Information
+                        </div>
+                        <div class="card-body">
+                            <div class="form-row">
+                                <div id="card-element" class="StripeElement">
+                                <script src="https://checkout.stripe.com/checkout.js" class="stripe-button"
+                                data-key="pk_test_51PJPlI098w1868DgStq59Ol9oGjPuVzf9Gi8w1aSa3UFFPU4gtKoum5KPA2DymTGWGHDh1p6Hb1JoIrVUb3CsBV700mRl7AgzB"
+                                data-description="PhonesForYou"
+                                data-amount="{{ total_amount * 100 }}"   
+                                data-locale="auto"></script>
+                            </div>
+                            <!-- Used to display form errors. -->
+                            <div id="card-errors" role="alert" class="error-message"></div>
+                        </div>
+                        <!-- Hidden input field for total_amount -->
+                        <input type="hidden" name="total_amount" id="total_amount" value="{{ total_amount }}">
+                        <button type="submit" class="btn btn-primary mt-3" id="submit-btn">Place Order</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="mt-4">
+        <a href="/user-home" class="btn btn-secondary btn-black">Back to Shopping</a>
+    </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
+<script src="https://js.stripe.com/v3/"></script>
+<script>
+    var style = {
+        base: {
+            fontSize: '16px',
+            color: '#32325d',
+            fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
+            '::placeholder': {
+                color: '#aab7c4',
+            },
+        },
+        invalid: {
+            color: '#fa755a',
+            iconColor: '#fa755a',
+        },
+    };
+
+    var stripe = Stripe('pk_test_51PJPlI098w1868DgStq59Ol9oGjPuVzf9Gi8w1aSa3UFFPU4gtKoum5KPA2DymTGWGHDh1p6Hb1JoIrVUb3CsBV700mRl7AgzB');
+    var elements = stripe.elements();
+    var card = elements.create('card', { style: style });
+    card.mount('#card-element');
+
+    card.on('change', function(event) {
+        var displayError = document.getElementById('card-errors');
+        if (event.error) {
+            displayError.textContent = event.error.message;
+        } else {
+            displayError.textContent = '';
+        }
+    });
+
+    var form = document.getElementById('payment-form');
+
+    form.addEventListener('submit', function(event) {
+        event.preventDefault();
+
+        stripe.createToken(card).then(function(result) {
+            if (result.error) {
+                var errorElement = document.getElementById('card-errors');
+                errorElement.textContent = result.error.message;
+            } else {
+                stripeTokenHandler(result.token);
+            }
+        });
+    });
+
+    function stripeTokenHandler(token) {
+        var form = document.getElementById('payment-form');
+        var hiddenInput = document.createElement('input');
+        hiddenInput.setAttribute('type', 'hidden');
+        hiddenInput.setAttribute('name', 'stripeToken');
+        hiddenInput.setAttribute('value', token.id);
+        form.appendChild(hiddenInput);
+
+        form.submit();
+    }
+</script>
+</body>
+</html>
+>>>>>>> 412d718559c1385e21b63127b4050ddf43d3ff99

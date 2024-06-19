@@ -1,8 +1,20 @@
+<<<<<<< HEAD
 <nav>
     <input type="checkbox" id="nav-toggle">
     <div class="logo"><img src="{{ url_for('static', filename='img/logo.png') }}" alt="Logo"></div>
     <ul class="links">
         {% if session.get('merchant_name') %}
+=======
+<link rel="stylesheet" href="static/css/form.css">
+<nav>
+    <input type="checkbox" id="nav-toggle">
+    <div class="logo">
+        <img src="{{ url_for('static', filename='img/black logo.png') }}" alt="Logo">
+    </div>
+    <ul class="links">
+        {% if session.get('merchant_name') %}
+        <li><a href="#">Welcome, {{ session.get('merchant_firstname') }} {{ session.get('merchant_lastname') }}</a></li>
+>>>>>>> 412d718559c1385e21b63127b4050ddf43d3ff99
         <li><a href="{{ url_for('logout_merchant') }}">Logout</a></li>
         {% elif session.get('name') %}
         <li><a href="{{ url_for('logout') }}">Logout</a></li>

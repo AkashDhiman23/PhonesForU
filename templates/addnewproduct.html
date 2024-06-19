@@ -4,46 +4,89 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Add New Product</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@200&display=swap" rel="stylesheet"> 
+    <!-- <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"> -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"> 
     <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.1.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/form.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboardstyle.css') }}">
     
 </head>
 <body>
-    <div class="container mt-5">
-        <h2>Add New Product</h2>
-        <form action="/addnewproduct/{{product_category.id }}" enctype="multipart/form-data" method="post">
+    {% include 'admin_navbar.html' %}
 
-            <div class="form-group">
-                <label for="product_name">Product Name</label>
-                <input type="text" class="form-control" id="product_name" name="product_name" required>
+    <div class="navbar">
+        <ul class="nav">
+            <li><a href ="/categories">Add New Categories</a></li>
+            <li><a href="{{ url_for('showcategories') }}">Display Categories</a></li> 
+        <li><a href="/categories">Orders</a></li>
+         <li><a href="{{ url_for('edit_merchant', company_id=session.get('merchant_name')) }}">My Account</a></li>
+        <li><a href="{{ url_for('logout_merchant') }}">Logout</a></li>
+        </ul>
+    </div>
+
+    
+    <div class="container">
+      
+        <form  action="/addnewproduct/{{product_category.id }}" enctype="multipart/form-data" method="POST">
+            <h1>Add new product</h1>
+            <div class="row" style="margin-top:30px;">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="product_name">Product Name</label>
+                        <input type="text" class="form-control" id="product_name" name="product_name" required>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="product_code">Product Code</label>
+                        <input type="text" class="form-control" id="product_code" name="product_code" required>
+                    </div>
+                </div>
             </div>
-            <div class="form-group">
-                <label for="product_code">Product Code</label>
-                <input type="text" class="form-control" id="product_code" name="product_code" required>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="product_title">Product Title</label>
+                        <input type="text" class="form-control" id="product_title" name="product_title" required>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="product_description">Product Description</label>
+                        <textarea class="form-control" id="product_description" name="product_description" rows="3" required></textarea>
+                    </div>
+                </div>
             </div>
-            <div class="form-group">
-                <label for="product_title">Product Title</label>
-                <input type="text" class="form-control" id="product_title" name="product_title" required>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="product_price">Product Price (NZD $)</label>
+                        <input type="number" step="0.01" class="form-control" id="product_price" name="product_price" required>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="product_quantity">Product Quantity</label>
+                        <input type="number" class="form-control" id="product_quantity" name="product_quantity" required>
+                    </div>
+                </div>
             </div>
-            <div class="form-group">
-                <label for="product_description">Product Description</label>
-                <textarea class="form-control" id="product_description" name="product_description" rows="3" required></textarea>
-            </div>
-            <div class="form-group">
-                <label for="product_price">Product Price</label>
-                <input type="number" step="0.01" class="form-control" id="product_price" name="product_price" required>
-            </div>
-            <div class="form-group">
-                <label for="product_quantity">Product Quantity</label>
-                <input type="number" class="form-control" id="product_quantity" name="product_quantity" required>
-            </div>
-            <div class="form-group">
-                <label for="product_main_image">Product Main Image</label>
-                <input type="file" class="form-control-file" id="product_main_image" name="product_main_image" required>
-            </div>
-            <div class="form-group">
-                <label for="product_secondary_image1">Product Secondary Image 1</label>
-                <input type="file" class="form-control-file" id="product_secondary_image1" name="product_secondary_image1">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="product_main_image">Product Main Image</label>
+                        <input type="file" class="form-control-file" id="product_main_image" name="product_main_image" required>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="product_secondary_image1">Product Secondary Image 1</label>
+                        <input type="file" class="form-control-file" id="product_secondary_image1" name="product_secondary_image1">
+                    </div>
+                </div>
             </div>
             <div class="form-group">
                 <label for="product_secondary_image2">Product Secondary Image 2</label>
@@ -51,11 +94,15 @@
             </div>
             <button type="submit" class="btn btn-primary">Add Product</button>
 
-            <a href="javascript:history.back()" class="back-btn"><i class="fas fa-arrow-left"></i> Go to last page</a>
+            <a href="javascript:history.back()" class="btn btn-info" style="background-color:black; color:white;">Go to last page</a>
+           
         </form>
     </div>
 
+    
+    
     <!-- Bootstrap JS -->
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js"></script>
+   
 </body>
 </html>

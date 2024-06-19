@@ -5,17 +5,43 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Product List</title>
     <!-- Bootstrap CSS -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.1.2/css/bootstrap.min.css">
-    
-    <!-- Your custom CSS -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-   
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@200&display=swap" rel="stylesheet"> 
+    <!-- <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"> -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"> 
+    <!-- Bootstrap CSS -->
+    <!-- <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.1.2/css/bootstrap.min.css">  -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboardstyle.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/form.css') }}">
+
 </head>
 <body>
+<<<<<<< HEAD
+=======
+   
+>>>>>>> 412d718559c1385e21b63127b4050ddf43d3ff99
     {% include 'admin_navbar.html' %}
 
-    <div class="container">
-        <div class="table-responsive" style="margin-top: 100px;">
+    <div class="navbar">
+        <ul class="nav">
+            <li><a href ="#">Add New Categories</a></li>
+            <li><a href="{{ url_for('showcategories') }}">Display Categories</a></li> 
+            <li><a href="/categories">Orders</a></li>
+            <li><a href="#">My Account</a></li>
+            <li><a href="{{ url_for('logout_merchant') }}">Logout</a></li>
+        </ul>
+    </div>
+    <div class="container" style="margin-top: -100px;" >
+        <div class="table-responsive" style="overflow: auto; scrollbar-width: none; margin-left:30px;">
+            <div class="row">
+                <div class="col">
+                    <h1>View all products</h1>
+                </div>
+                <div class="col text-right">
+                    <a href="{{ url_for('add_new_product_route', category_id=product_category.id) }}" class="btn btn-success" style="margin-top: 5px;">Add New Product</a>
+                </div>
+            </div>
+          
             <table class="table table-striped mt-5">
                 <thead class="bg-light">
                     <tr>
@@ -42,14 +68,13 @@
                             <button class="btn btn-danger" onclick="document.getElementById('delete_product_model_{{ product.id }}').style.display='block'">Delete</button>
                         </td>
                         <td> 
-                            
                             {% if product.product_main_image %}
                             <img src="{{ product.product_main_image }}" alt="Product Image"
-                                 style="width: 45px; height: 45px"
-                                 class="rounded-circle" onerror="imageError(this)">
-                        {% else %}
+                                style="width: 45px; height: 45px"
+                                class="rounded-circle" onerror="imageError(this)">
+                            {% else %}
                             <p>No image available</p>
-                        {% endif %}
+                            {% endif %}
                         </td>
                         <!-- Modal code -->
                         {% include 'productdelete_model.html' %}
@@ -57,35 +82,31 @@
                     {% endfor %}
                 </tbody>
             </table>
-        </div>
-        <!-- Button for adding a new product -->
-        <div class="row mt-4">
-            <div class="col-md-1 text-center">
-                <a href="/addnewproduct/{{ product_category.id }}" class="btn btn-success">Add New Product</a>
-            </div>
-            <div class="col-md-11 text-right">
-                <a href="javascript:history.back()" class="btn btn-info">Back</a>
-            </div>
+            <a href="javascript:history.back()" class="btn btn-info" style="background-color:black; color:white;">Go to last page</a>
         </div>
     </div>
+    
+       
 
+
+    
     <script>
         function confirmLogout() {
             var confirmation = confirm("Are you sure you want to logout?");
             if (confirmation) {
                 window.location.href = "{{ url_for('logout') }}";
             } else {
-              
+        
             }
         }
     </script>
 
-<script>
-    function imageError(imgElement) {
-        imgElement.onerror = null; // Prevent infinite loop in case placeholder image also fails
-        imgElement.src = "{{ url_for('static', filename='img/logo.png') }}"; // Provide a path to a placeholder image
-        // imgElement.alt = "Placeholder Image"; // Optional: Set an alternative text for the placeholder image
-    }
-</script>
+    <script>
+        function imageError(imgElement) {
+            imgElement.onerror = null; // Prevent infinite loop in case placeholder image also fails
+            imgElement.src = "{{ url_for('static', filename='img/logo.png') }}"; // Provide a path to a placeholder image
+            // imgElement.alt = "Placeholder Image"; // Optional: Set an alternative text for the placeholder image
+        }
+    </script>
 </body>
 </html>

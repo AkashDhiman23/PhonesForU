@@ -1,23 +1,88 @@
+<<<<<<< HEAD
 <nav>
     <input type="checkbox" id="nav-toggle">
     <div class="logo"><img src="{{ url_for('static', filename='img/logo.png') }}" alt="Logo"></div>
     <ul class="links">
         {% if session.name %}
+=======
+<!-- navbar.html -->
+<nav>
+    <a href="/user-home">
+        <div class="logo"><img src="{{ url_for('static', filename='img/logo.png') }}" alt="Logo"></div>
+    </a>
+    <ul class="links">
+        {% if session.get('name') %}
+>>>>>>> 412d718559c1385e21b63127b4050ddf43d3ff99
             <li><a href="/logout">Logout</a></li>
         {% else %}
             <li><a href="#" data-toggle="modal" data-target="#loginModal">Login</a></li>
             <li><a href="#" data-toggle="modal" data-target="#signupModal">Signup</a></li>
         {% endif %}
+<<<<<<< HEAD
         <li><a href="/admin">Merchant</a></li>
+=======
+>>>>>>> 412d718559c1385e21b63127b4050ddf43d3ff99
         <!-- Dropdown for categories -->
         <li class="nav-item dropdown">
             <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                 Categories
             </a>
             <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+<<<<<<< HEAD
                 {% for category in categories %}
                     <a class="dropdown-item category-link" href="/userproduct/{{ category.id }}">{{ category.product_category_name }}</a>
                 {% endfor %}
+=======
+                {% if categories %}
+                    {% for category in categories %}
+                        <a class="dropdown-item category-link" href="/userproduct/{{ category.id }}">{{ category.product_category_name }}</a>
+                    {% endfor %}
+                {% else %}
+                    <a class="dropdown-item" href="#">No categories found</a>
+                {% endif %}
+            </div>
+        </li>
+        <!-- Cart dropdown -->
+        <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" id="cartDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                <span class="fa fa-gift bigicon"></span> {{ session.get('cart', {}) | length }} - Items in Cart
+            </a>
+            <div class="dropdown-menu dropdown-menu-right" aria-labelledby="cartDropdown">
+                {% if session.get('cart') and session.get('cart')|length > 0 %}
+                    {% set total_price = 0 %}
+                    {% for item in session.get('cart') %}
+                        {% set product = products | selectattr("id", "equalto", item.product_id) | list | first %}
+                        {% if product %}
+                            {% set item_total_price = product.product_price * item.quantity %}
+                            {% set total_price = total_price + item_total_price %}
+                            <div class="dropdown-item d-flex align-items-center">
+                                <img src="{{ product.product_main_image }}" alt="{{ product.product_title }}" width="50" height="50" class="mr-2">
+                                <div>
+                                    <strong>{{ product.product_title }}</strong><br>
+                                    <span class="cart-item-quantity">Quantity: {{ item.quantity }}</span><br>
+                                    <div class="input-group mb-3">
+                                        <div class="input-group-prepend">
+                                            <button class="btn btn-outline-secondary btn-minus" type="button" data-item="{{ item.product_id }}">-</button>
+                                        </div>
+                                        <input type="text" class="form-control quantity" value="{{ item.quantity }}" readonly>
+                                        <div class="input-group-append">
+                                            <button class="btn btn-outline-secondary btn-plus" type="button" data-item="{{ item.product_id }}">+</button>
+                                        </div>
+                                    </div>
+                                    <span>Total: {{ item_total_price }} NZD</span>
+                                </div>
+                                <a href="{{ url_for('remove_from_cart', product_id=product.id) }}" class="ml-auto text-danger remove-btn" data-product-id="{{ product.id }}" style="color: black;">
+                                    <span aria-hidden="true" style="color: black;">&times;</span>
+                                </a>
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+                {% else %}
+                    <div class="dropdown-item">Your cart is empty.</div>
+                {% endif %}
+                <div class="dropdown-divider"></div>
+                <a class="dropdown-item text-center" href="{{ url_for('user_cart', cart=session.get('cart', [])) }}">View Cart</a>
+>>>>>>> 412d718559c1385e21b63127b4050ddf43d3ff99
             </div>
         </li>
     </ul>
@@ -26,4 +91,8 @@
         <div class="line"></div>
         <div class="line"></div>
     </label>
+<<<<<<< HEAD
 </nav>
+=======
+</nav>
+>>>>>>> 412d718559c1385e21b63127b4050ddf43d3ff99
