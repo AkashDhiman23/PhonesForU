@@ -1,7 +1,7 @@
 import os
 from fastapi.encoders import jsonable_encoder
 import psycopg2
-from flask import Flask, render_template, request, session, redirect, url_for, jsonify, flash, send_from_directory
+from flask import Flask, render_template, request, session, redirect, url_for, jsonify, flash, send_from_directory,send_file
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from sqlalchemy.orm import Session
@@ -15,6 +15,12 @@ import json
 import stripe
 from sqlalchemy.orm import Session
 from sqlalchemy.orm import scoped_session, sessionmaker
+from reportlab.lib.pagesizes import letter
+from reportlab.pdfgen import canvas
+from fpdf import FPDF
+from reportlab.lib.utils import ImageReader
+import io
+from io import BytesIO
 
 
 
@@ -44,6 +50,43 @@ stripe.api_key = 'sk_test_51PJPlI098w1868Dgc6pSzhp7ESO87GRpL89KmZVlHl6TdRLtaeRok
 
 # Allowed file extensions for file uploads
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
+
+
+# Function to generate invoice PDF
+def generate_invoice_pdf(user, order, cart_items):
+    # Create a new PDF document
+    pdf = FPDF()
+    pdf.add_page()
+    pdf.set_font("Arial", size=12)
+
+    # Add invoice header
+    pdf.cell(200, 10, txt="Invoice", ln=True, align='C')
+
+    # Add user details
+    pdf.cell(200, 10, txt="User Details", ln=True, align='L')
+    pdf.cell(200, 10, txt=f"Name: {user.user_firstname} {user.user_lastname}", ln=True, align='L')
+    pdf.cell(200, 10, txt=f"Email: {user.email_address}", ln=True, align='L')
+    pdf.cell(200, 10, txt=f"Mobile: {user.mobile}", ln=True, align='L')
+
+    # Add shipping address
+    pdf.cell(200, 10, txt="Shipping Address", ln=True, align='L')
+    pdf.cell(200, 10, txt=f"{order.shipping_address}, {order.shipping_city}, {order.shipping_state}, {order.shipping_zip}, {order.shipping_country}", ln=True, align='L')
+
+    # Add order details
+    pdf.cell(200, 10, txt="Order Details", ln=True, align='L')
+    for item in cart_items:
+        pdf.cell(200, 10, txt=f"Product: {item.product.product_name} | Price: {item.product.product_price} | Quantity: {item.quantity} | Total: {item.product.product_price * item.quantity}", ln=True, align='L')
+
+    # Add total amount
+    pdf.cell(200, 10, txt=f"Total Amount: {order.total_amount}", ln=True, align='L')
+
+    # Output the PDF to a BytesIO object
+    pdf_output = io.BytesIO()
+    pdf.output(pdf_output)
+    pdf_output.seek(0)
+
+    return pdf_output
+
 
 
 def allowed_file(filename):
@@ -446,30 +489,41 @@ def add_new_product_route(category_id):
 def add_to_cart(product_id):
     if 'name' not in session:
         return redirect(url_for('login'))
-    
+
     user_id = session['name']
     cart = session.get('cart', [])
-    
+
+    # Check if the product exists
+    product = ProductList.query.get(product_id)
+    if not product:
+        return "Product not found", 404
+
     # Check if the product_id is already in the cart
     index = next((i for i, item in enumerate(cart) if item['product_id'] == product_id), None)
-    
+
     if index is not None:
         # If the product is already in the cart, increment its quantity
         cart[index]['quantity'] += 1
         # Update the quantity in the database
         cart_item = Cart.query.filter_by(user_id=user_id, product_id=product_id).first()
-        cart_item.quantity = cart[index]['quantity']
+        if cart_item:
+            cart_item.quantity = cart[index]['quantity']
+        else:
+            # Handle the case where the cart item was not found in the database
+            new_cart_item = Cart(user_id=user_id, product_id=product_id, quantity=cart[index]['quantity'])
+            db.session.add(new_cart_item)
     else:
         # If the product is not in the cart, add it with quantity 1
         cart.append({'product_id': product_id, 'quantity': 1})
         # Add new cart item to the database
         new_cart_item = Cart(user_id=user_id, product_id=product_id, quantity=1)
         db.session.add(new_cart_item)
-    
+
     db.session.commit()
     session['cart'] = cart
-    
+
     return redirect(url_for('user_home'))
+
 
 
 @app.route('/remove_from_cart/<int:product_id>', methods=['GET'])
@@ -597,94 +651,81 @@ def update_cart_item():
     }), 200
 
 
-# @app.route('/payment', methods=['POST'])
-# def payment():
-#     # Retrieve form data
-#     stripe_token = request.form.get('stripeToken')
-#     total_amount = request.form.get('total_amount')
-#     shipping_address = request.form.get('shipping_address')
-#     shipping_city = request.form.get('shipping_city')
-#     shipping_state = request.form.get('shipping_state')
-#     shipping_zip = request.form.get('shipping_zip')
-#     shipping_country = request.form.get('shipping_country')
-    
-#     user_id = session.get('name')
-#     user = User.query.get(user_id)
-
-#     if not user:
-#         flash("User not found.", "danger")
-#         return redirect(url_for('checkout'))
-
-#     # Retrieve cart items
-#     cart_items = Cart.query.filter_by(user_id=user_id).all()
-#     if not cart_items:
-#         flash("No items in cart.", "danger")
-#         return redirect(url_for('checkout'))
-
-#     try:
-#         # Create a Stripe charge
-#         charge = stripe.Charge.create(
-#             amount=int(float(total_amount) * 100),  # Amount in cents
-#             currency='nzd',
-#             description='Purchase from PhonesForYou',
-#             source=stripe_token,
-#         )
-
-#         # Save payment record
-#         for item in cart_items:
-#             payment_record = PaymentRecord(
-#                 transaction_id=charge['id'],
-#                 user_id=user.user_id,
-#                 user_first_name=user.user_firstname,
-#                 user_last_name=user.user_lastname,
-#                 user_email_address=user.email_address,
-#                 user_mobile=user.mobile,
-#                 product_id=item.product.id if item.product else None,
-#                 product_name=item.product.product_name if item.product else "Product not available",
-#                 product_price=item.product.product_price if item.product else 0,
-#                 product_quantity=item.quantity,
-#                 shipping_address=shipping_address,
-#                 shipping_city=shipping_city,
-#                 shipping_state=shipping_state,
-#                 shipping_zip=shipping_zip,
-#                 shipping_country=shipping_country,
-#                 total_amount=total_amount,
-#                 transaction_date=datetime.utcnow()
-#             )
-#             db.session.add(payment_record)
-
-#         # Clear the cart
-#         for item in cart_items:
-#             db.session.delete(item)
-
-#         db.session.commit()
-
-#         flash("Payment successful!", "success")
-#         return redirect(url_for('user_home'))
-
-#     except stripe.error.StripeError as e:
-#         # Handle Stripe errors
-#         flash(f"Payment error: {e.user_message}", "danger")
-#         return redirect(url_for('checkout'))
-
-#     except Exception as e:
-#         # Handle other errors
-#         db.session.rollback()
-#         flash(f"An error occurred: {e}", "danger")
-#         return redirect(url_for('checkout'))
 
 
-@app.route('/checkout', methods=['GET'])
+@app.route('/checkout')
 def checkout():
-    # Replace with your session management code to retrieve user and cart data
-    user_id = session.get('user_id')
+    if 'name' not in session:
+        return redirect(url_for('login'))
+
+    user_id = session['name']
     user = User.query.get(user_id)
+
+    if not user:
+        return "User not found"  # Handle case where user does not exist (optional)
+
     cart_items = Cart.query.filter_by(user_id=user_id).all()
+    total_amount = sum(item.product.product_price * item.quantity if item.product else 0 for item in cart_items)
+    stripe_public_key = app.config["STRIPE_PUBLIC_KEY"]
 
-    # Calculate total amount
-    total_amount = sum(item.product.product_price * item.quantity for item in cart_items)
+    return render_template('checkout.html', user=user, cart_items=cart_items, total_amount=total_amount, stripe_public_key=stripe_public_key)
 
-    return render_template('checkout.html', user=user, cart_items=cart_items, total_amount=total_amount, stripe_public_key='your_stripe_public_key')
+@app.route('/generate_invoice', methods=['POST'])
+def generate_invoice():
+    try:
+        user_id = session.get('name')
+        if not user_id:
+            return jsonify({"error": "User not authenticated"}), 401
+        
+        # Retrieve order details for the user
+        order = Order.query.filter_by(user_id=user_id).order_by(Order.order_date.desc()).first()
+        if not order:
+            return jsonify({"error": "Order not found for the user"}), 404
+        
+        # Retrieve order items
+        order_items = OrderItem.query.filter_by(order_id=order.order_id).all()
+        if not order_items:
+            return jsonify({"error": "No order items found"}), 404
+        
+        # Retrieve user details
+        user = User.query.get(user_id)
+        if not user:
+            return jsonify({"error": "User not found"}), 404
+        
+        # Generate invoice PDF
+        pdf_output = generate_invoice_pdf(user, order, order_items)
+        
+        # Return PDF as an attachment
+        return send_file(
+            pdf_output,
+            as_attachment=True,
+            attachment_filename='invoice.pdf',
+            mimetype='application/pdf'
+        )
+    
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    
+
+@app.route('/download_invoice', methods=['GET'])
+def download_invoice():
+    # Generate PDF (example using FPDF)
+    pdf = FPDF()
+    pdf.add_page()
+    pdf.set_font("Arial", size=12)
+    pdf.cell(200, 10, txt="Invoice", ln=True, align='C')
+    pdf_output = io.BytesIO()
+    pdf.output(pdf_output)
+    pdf_output.seek(0)
+    
+    # Send file as an attachment
+    return send_file(
+        pdf_output,
+        as_attachment=True,
+        attachment_filename='invoice.pdf',
+        mimetype='application/pdf'
+    )
+    
 
 @app.route('/payment', methods=['POST'])
 def payment():
@@ -697,15 +738,10 @@ def payment():
         shipping_zip = request.form.get('shipping_zip')
         shipping_country = request.form.get('shipping_country')
         user_id = session.get('user_id')  # Replace with your session management code
-        
+
         # Validate form data
         if not (stripe_token and shipping_address and shipping_city and shipping_state and shipping_country and user_id):
             return jsonify({"error": "Incomplete form data"}), 400
-
-        # Check for duplicate transactions based on stripe_token
-        existing_transaction = Payment.query.filter_by(transaction_id=stripe_token).first()
-        if existing_transaction:
-            return jsonify({"error": "Duplicate transaction"}), 400
 
         # Retrieve user details
         user = User.query.get(user_id)
@@ -721,9 +757,10 @@ def payment():
         total_amount = sum(item.product.product_price * item.quantity for item in cart_items)
 
         # Process payment with Stripe
+        stripe.api_key = 'sk_test_51PJPlI098w1868Dgc6pSzhp7ESO87GRpL89KmZVlHl6TdRLtaeRokRO5RkJPOmS7oCsCddTlPP3SGqjFAez52rs300lxnlV9Lg'
         charge = stripe.Charge.create(
-            amount=int(total_amount * 100), 
-            currency='NZD',  
+            amount=int(total_amount * 100),
+            currency='NZD',
             description='Payment for order',
             source=stripe_token
         )
@@ -759,7 +796,7 @@ def payment():
                 product_id=item.product.id,
                 product_name=item.product.product_name,
                 product_price=item.product.product_price,
-                product_quantity=item.quantity,
+                product_quantity=item.orders.quantity,
             )
             db.session.add(order_item)
 
@@ -768,7 +805,8 @@ def payment():
             transaction_id=transaction_id,
             order_id=order.order_id,
             transaction_date=datetime.utcnow(),
-            total_amount=total_amount
+            total_amount=total_amount,
+            user_id=user_id  # Ensure user_id is set here
         )
         db.session.add(payment_record)
         
@@ -777,15 +815,25 @@ def payment():
 
         db.session.commit()
 
-        return jsonify({"message": "Payment successful", "order_id": order.order_id}), 200
+        # Generate the invoice PDF
+        pdf_output = generate_invoice_pdf(user, order, cart_items)
+        
+        # Return PDF as an attachment
+        return send_file(
+            pdf_output,
+            as_attachment=True,
+            attachment_filename='invoice.pdf',
+            mimetype='application/pdf'
+        )
 
     except stripe.error.StripeError as e:
         db.session.rollback()
         return jsonify({"error": str(e)}), 403
-    
+
     except Exception as e:
         db.session.rollback()
         return jsonify({"error": str(e)}), 500
+    
 
 @app.route('/place-order', methods=['POST'])
 def place_order():
@@ -990,5 +1038,8 @@ def edit_merchant(company_id):
         return redirect(url_for('edit_merchant', company_id=company_id))
 
 
+
 if __name__ == '__main__':
     app.run(debug=True)
+
+
