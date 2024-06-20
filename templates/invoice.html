@@ -141,7 +141,7 @@
                             <div class="d-print-none mt-4">
                                 <div class="float-end">
                                     <a href="javascript:window.print()" class="btn btn-success"><i class="fa fa-print"></i> Print</a>
-                                    <a href="#" class="btn btn-primary w-md">Send</a>
+                                    <a href="{{ url_for('send_invoice_email', order_id=order.order_id) }}" class="btn btn-primary w-md">Send</a>
                                     <a href="{{ url_for('order_details', order_id=order.order_id) }}" class="btn btn-secondary">Back to Order Details</a> <!-- Updated back button -->
                                 </div>
                             </div>

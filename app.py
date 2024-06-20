@@ -1,7 +1,7 @@
 import os
 from fastapi.encoders import jsonable_encoder
 import psycopg2
-from flask import Flask, render_template, request, session, redirect, url_for, jsonify, flash, send_from_directory,send_file
+from flask import Flask, render_template, request, session, redirect, url_for, jsonify, flash, send_from_directory,send_file,make_response
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from sqlalchemy.orm import Session
@@ -21,6 +21,7 @@ from fpdf import FPDF
 from reportlab.lib.utils import ImageReader
 import io
 from io import BytesIO
+from flask_mail import Mail,Message
 # from weasyprint import HTML
 
 
@@ -34,9 +35,19 @@ app.config['SQLALCHEMY_DATABASE_URI'] = "postgresql://postgres:dhiman223@localho
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config['STATIC_FOLDER'] = 'static'
 
+# Email configuration
+
+app.config['MAIL_SERVER'] = 'smtp.gmail.com'  
+app.config['MAIL_PORT'] = 587  
+app.config['MAIL_USE_TLS'] = True  
+app.config['MAIL_USERNAME'] = 'phonesforu.u@gmail.com'  
+app.config['MAIL_PASSWORD'] = 'dhiman@222'  
+app.config['MAIL_DEFAULT_SENDER'] = 'phonesforu.u@gmail.com'  
+
 # Initialize SQLAlchemy and Flask-Migrate
 db.init_app(app)
 migrate = Migrate(app, db)
+mail = Mail(app)
 
 
 # Folder configuration for product images
@@ -699,7 +710,86 @@ def download_invoice():
         attachment_filename='invoice.pdf',
         mimetype='application/pdf'
     )
-    
+
+
+@app.route('/send_invoice_email/<int:order_id>')
+def send_invoice_email(order_id):
+    try:
+        # Fetch order details and user information based on order_id
+        order = Order.query.get(order_id)
+        if not order:
+            return 'Order not found.', 404
+
+        user = User.query.get(order.user_id)
+        if not user:
+            return 'User not found.', 404
+
+        order_items = OrderItem.query.filter_by(order_id=order_id).all()
+
+        # Generate PDF invoice and send email
+        pdf_buffer = generate_and_send_invoice_pdf(order, user, order_items)
+
+        if pdf_buffer:
+            return 'Invoice sent successfully!', 200
+        else:
+            return 'Failed to send invoice.', 500
+
+    except Exception as e:
+        print(str(e))
+        return 'Failed to send invoice due to an error.', 500
+
+# Function to generate PDF invoice and send email
+def generate_and_send_invoice_pdf(order, user, order_items):
+    try:
+        # Generate PDF invoice
+        pdf_buffer = generate_invoice_pdf(order, order_items)
+        print(pdf_buffer)
+
+        if pdf_buffer:
+            # Send email with invoice attached
+            msg = Message(subject=f"Invoice for Order #{order.order_id}",
+                          recipients=[user.email_address],
+                          sender=app.config['MAIL_DEFAULT_SENDER'])
+
+            msg.body = f'Dear {user.user_firstname},\n\nYour order has been confirmed.\n\nThank you for shopping with us!\n\nBest regards,\nThe PhonesForU Team'
+            msg.attach(f"invoice_order_{order.order_id}.pdf", 'application/pdf', pdf_buffer.getvalue())
+            print("Email message:")
+            print(msg)
+            mail.send(msg)
+        
+        return pdf_buffer
+
+    except Exception as e:
+        print(str(e))
+        return None
+
+# Function to generate PDF invoice
+def generate_invoice_pdf(order, order_items):
+    try:
+        buffer = BytesIO()
+        p = canvas.Canvas(buffer)
+
+        # Write content to PDF
+        p.drawString(100, 750, f"Invoice for Order #{order.order_id}")
+
+        # Example of iterating over order items and writing them to PDF
+        y_position = 700
+        for index, item in enumerate(order_items, start=1):
+            y_position -= 20
+            p.drawString(100, y_position, f"{index}. {item.product_name} - ${item.product_price} x {item.product_quantity}")
+
+        p.showPage()
+        p.save()
+
+        # Rewind the buffer
+        buffer.seek(0)
+
+        return buffer
+
+    except Exception as e:
+        print(str(e))
+        return None
+
 
 @app.route('/payment', methods=['POST'])
 def payment():
