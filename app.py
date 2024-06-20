@@ -21,6 +21,7 @@ from fpdf import FPDF
 from reportlab.lib.utils import ImageReader
 import io
 from io import BytesIO
+# from weasyprint import HTML
 
 
 
@@ -665,46 +666,19 @@ def checkout():
         return "User not found"  # Handle case where user does not exist (optional)
 
     cart_items = Cart.query.filter_by(user_id=user_id).all()
+
     total_amount = sum(item.product.product_price * item.quantity if item.product else 0 for item in cart_items)
+
     stripe_public_key = app.config["STRIPE_PUBLIC_KEY"]
 
     return render_template('checkout.html', user=user, cart_items=cart_items, total_amount=total_amount, stripe_public_key=stripe_public_key)
 
 @app.route('/generate_invoice', methods=['POST'])
 def generate_invoice():
-    try:
-        user_id = session.get('name')
-        if not user_id:
-            return jsonify({"error": "User not authenticated"}), 401
-        
-        # Retrieve order details for the user
-        order = Order.query.filter_by(user_id=user_id).order_by(Order.order_date.desc()).first()
-        if not order:
-            return jsonify({"error": "Order not found for the user"}), 404
-        
-        # Retrieve order items
-        order_items = OrderItem.query.filter_by(order_id=order.order_id).all()
-        if not order_items:
-            return jsonify({"error": "No order items found"}), 404
-        
-        # Retrieve user details
-        user = User.query.get(user_id)
-        if not user:
-            return jsonify({"error": "User not found"}), 404
-        
-        # Generate invoice PDF
-        pdf_output = generate_invoice_pdf(user, order, order_items)
-        
-        # Return PDF as an attachment
-        return send_file(
-            pdf_output,
-            as_attachment=True,
-            attachment_filename='invoice.pdf',
-            mimetype='application/pdf'
-        )
-    
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+    order_id = request.form.get('order_id')
+    if not order_id:
+        return "Order ID is missing", 400
+    return redirect(url_for('invoice', order_id=order_id))
     
 
 @app.route('/download_invoice', methods=['GET'])
@@ -737,11 +711,16 @@ def payment():
         shipping_state = request.form.get('shipping_state')
         shipping_zip = request.form.get('shipping_zip')
         shipping_country = request.form.get('shipping_country')
-        user_id = session.get('user_id')  # Replace with your session management code
-
+        user_id = session.get('name')  # Replace with your session management code
+        
         # Validate form data
         if not (stripe_token and shipping_address and shipping_city and shipping_state and shipping_country and user_id):
             return jsonify({"error": "Incomplete form data"}), 400
+
+        # Check for duplicate transactions based on stripe_token
+        existing_transaction = Payment.query.filter_by(transaction_id=stripe_token).first()
+        if existing_transaction:
+            return jsonify({"error": "Duplicate transaction"}), 400
 
         # Retrieve user details
         user = User.query.get(user_id)
@@ -757,10 +736,9 @@ def payment():
         total_amount = sum(item.product.product_price * item.quantity for item in cart_items)
 
         # Process payment with Stripe
-        stripe.api_key = 'sk_test_51PJPlI098w1868Dgc6pSzhp7ESO87GRpL89KmZVlHl6TdRLtaeRokRO5RkJPOmS7oCsCddTlPP3SGqjFAez52rs300lxnlV9Lg'
         charge = stripe.Charge.create(
-            amount=int(total_amount * 100),
-            currency='NZD',
+            amount=int(total_amount * 100), 
+            currency='NZD',  
             description='Payment for order',
             source=stripe_token
         )
@@ -796,7 +774,7 @@ def payment():
                 product_id=item.product.id,
                 product_name=item.product.product_name,
                 product_price=item.product.product_price,
-                product_quantity=item.orders.quantity,
+                product_quantity=item.quantity,
             )
             db.session.add(order_item)
 
@@ -815,21 +793,12 @@ def payment():
 
         db.session.commit()
 
-        # Generate the invoice PDF
-        pdf_output = generate_invoice_pdf(user, order, cart_items)
-        
-        # Return PDF as an attachment
-        return send_file(
-            pdf_output,
-            as_attachment=True,
-            attachment_filename='invoice.pdf',
-            mimetype='application/pdf'
-        )
+        return redirect(url_for('checkout'))
 
     except stripe.error.StripeError as e:
         db.session.rollback()
         return jsonify({"error": str(e)}), 403
-
+    
     except Exception as e:
         db.session.rollback()
         return jsonify({"error": str(e)}), 500
@@ -870,14 +839,10 @@ def process_payment():
         # Since it's a decline, stripe.error.CardError will be caught
         return jsonify({'error': e.error.message})
     except stripe.error.RateLimitError as e:
-        # Too many requests made to the API too quickly
         return jsonify({'error': 'Rate limit error'})
     except stripe.error.InvalidRequestError as e:
-        # Invalid parameters were supplied to Stripe's API
         return jsonify({'error': 'Invalid parameters'})
     except stripe.error.AuthenticationError as e:
-        # Authentication with Stripe's API failed
-        # (maybe you changed API keys recently)
         return jsonify({'error': 'Authentication error'})
     except stripe.error.APIConnectionError as e:
         # Network communication with Stripe failed
@@ -890,6 +855,42 @@ def process_payment():
         return jsonify({'error': 'Unknown error'})
 
 
+@app.route('/my_orders')
+def my_orders():
+    user_id = session.get('name')  # Ensure this matches how you store user ID in the session
+    if not user_id:
+        return redirect(url_for('login'))
+
+    # Fetch orders for the logged-in user
+    orders = Order.query.filter_by(user_id=user_id).all()
+
+    return render_template('my_orders.html', orders=orders)
+
+@app.route('/order/<int:order_id>')
+def order_details(order_id):
+    order = Order.query.get_or_404(order_id)
+    order_items = OrderItem.query.filter_by(order_id=order.order_id).all()
+    payment = Payment.query.filter_by(order_id=order.order_id).first()
+    return render_template('order_details.html', order=order, order_items=order_items, payment=payment)
+
+
+
+@app.route('/invoice/<order_id>', methods=['GET'])
+def invoice(order_id):
+    # Fetch order details from the database
+    order = Order.query.get(order_id)
+    if not order:
+        return "Order not found", 404
+
+    # Fetch user details
+    user = User.query.get(order.user_id)
+    if not user:
+        return "User not found", 404
+
+    # Fetch order items
+    order_items = OrderItem.query.filter_by(order_id=order_id).all()
+    
+    return render_template('invoice.html', user=user, order=order, order_items=order_items)
 
 @app.route('/viewproducts/<int:category_id>', methods=['GET', 'POST'])
 def viewproducts(category_id):

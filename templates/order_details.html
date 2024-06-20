@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Details</title>
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css">
+    <!-- Font Awesome CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/user.css') }}">
+</head>
+<body>
+    {% include 'user_navbar.html' %}
+
+    <div class="main d-flex">
+        <div class="navbar">
+            <ul class="nav">
+                <li><a href="{{ url_for('change_password', user_id=session.get('name')) }}">Change Password</a></li>
+                <li><a href="{{ url_for('user_details', user_id=session.get('name')) }}">My Details</a></li>
+                <li><a href="{{ url_for('my_orders') }}">My Orders</a></li>
+                <li><a href="/logout">Logout</a></li>
+            </ul>
+        </div>
+        <div class="container mt-5" style="padding: 100px;">
+            <a href="{{ url_for('my_orders') }}" class="btn btn-secondary mb-3">Back to My Orders</a> <!-- Back button added -->
+            <h2>Order Details</h2>
+            <div class="card">
+                <div class="card-header">
+                    Order #{{ order.order_id }} - {{ order.order_date.strftime('%Y-%m-%d %H:%M:%S') }}
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title">Transaction ID</h5>
+                    <p class="card-text">{{ payment.transaction_id }}</p>
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title">Shipping Address</h5>
+                    <p class="card-text">
+                        {{ order.shipping_address }}, {{ order.shipping_city }}, {{ order.shipping_state }}, {{ order.shipping_zip }}, {{ order.shipping_country }}
+                    </p>
+
+                    <h5 class="card-title">Order Items</h5>
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Product</th>
+                                    <th>Price</th>
+                                    <th>Quantity</th>
+                                    <th>Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in order_items %}
+                                <tr>
+                                    <td>{{ item.product_name }}</td>
+                                    <td>{{ item.product_price }} NZD</td>
+                                    <td>{{ item.product_quantity }}</td>
+                                    <td>{{ item.product_price * item.product_quantity }} NZD</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <h5><div class="card-title" style="font-weight: 600;">Total Amount</div></h5>
+                    <p class="card-text">{{ order.total_amount }} NZD</p>
+
+                    <a href="{{ url_for('invoice', order_id=order.order_id) }}" class="btn btn-primary mt-3">Download Invoice (PDF)</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- Bootstrap JS -->
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"></script>
+</body>
+</html>

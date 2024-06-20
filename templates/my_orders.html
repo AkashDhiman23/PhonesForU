@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Orders</title>
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="static/css/user.css">
+</head>
+<body>
+    {% include 'user_navbar.html' %}
+
+    <div class="main d-flex">
+        <div class="navbar">
+            <ul class="nav">
+                <li><a href="{{ url_for('change_password', user_id=session.get('name')) }}">Change Password</a></li>
+                <li><a href="{{ url_for('user_details', user_id=session.get('name')) }}">My Details</a></li> 
+                <li><a href="{{ url_for('my_orders') }}">My Orders</a></li>
+                <li><a href="/logout">Logout</a></li>
+            </ul>
+        </div>  
+        <div class="container ", style="padding: 100px;",>
+            <h2>My Orders</h2>
+            {% if orders %}
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Order ID</th>
+                                <th>Date</th>
+                                <th>Total Amount</th>
+                                <th>Details</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for order in orders %}
+                            <tr>
+                                <td>{{ order.order_id }}</td>
+                                <td>{{ order.order_date.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                                <td>{{ order.total_amount }} NZD</td>
+                                <td><a href="{{ url_for('order_details', order_id=order.order_id) }}" class="btn btn-info">View Details</a></td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <p>You have no orders.</p>
+            {% endif %}
+        </div>
+    </div>
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- Bootstrap JS -->
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"></script>
+</body>
+</html>

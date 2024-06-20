@@ -19,7 +19,7 @@
             <ul class="nav">
                 <li><a href="{{ url_for('change_password', user_id=session.get('name')) }}">Change Password</a></li>
                 <li><a href="{{ url_for('user_details', user_id=session.get('name')) }}">My Details</a></li> 
-                <li><a href="/addtocart">My Orders</a></li>
+                <li><a href="{{ url_for('my_orders') }}">My Orders</a></li>
                 <li><a href="/logout">Logout</a></li>
             </ul>
         </div>
