@@ -1,7 +1,7 @@
 import os
 from fastapi.encoders import jsonable_encoder
 import psycopg2
-from flask import Flask, render_template, request, session, redirect, url_for, jsonify, flash, send_from_directory,send_file,make_response
+from flask import Flask, render_template, request, session, redirect, url_for, jsonify, flash, send_from_directory, send_file, make_response
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from sqlalchemy.orm import Session
@@ -10,21 +10,17 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from model import ProductCategory, ProductList, db, User, MerchantUser, Cart, Order, Payment, OrderItem
 from sqlalchemy.sql.expression import func
 from datetime import datetime as dt
-from datetime import datetime,timezone
+from datetime import datetime, timezone
 import json
 import stripe
-from sqlalchemy.orm import Session
-from sqlalchemy.orm import scoped_session, sessionmaker
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
 from fpdf import FPDF
 from reportlab.lib.utils import ImageReader
 import io
 from io import BytesIO
-from flask_mail import Mail,Message
-# from weasyprint import HTML
-
-
+from flask_mail import Mail, Message
+from xhtml2pdf import pisa
 
 app = Flask(__name__)
 # Database configuration
@@ -36,19 +32,17 @@ app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config['STATIC_FOLDER'] = 'static'
 
 # Email configuration
-
-app.config['MAIL_SERVER'] = 'smtp.gmail.com'  
-app.config['MAIL_PORT'] = 587  
-app.config['MAIL_USE_TLS'] = True  
-app.config['MAIL_USERNAME'] = 'phonesforu.u@gmail.com'  
-app.config['MAIL_PASSWORD'] = 'dhiman@222'  
-app.config['MAIL_DEFAULT_SENDER'] = 'phonesforu.u@gmail.com'  
+app.config['MAIL_SERVER'] = 'smtp.office365.com'
+app.config['MAIL_PORT'] = 587
+app.config['MAIL_USE_TLS'] = True
+app.config['MAIL_USERNAME'] = 'akashdhiman23@outlook.com'
+app.config['MAIL_PASSWORD'] = 'akash@222'
+app.config['MAIL_DEFAULT_SENDER'] = 'akashdhiman23@outlook.com'
 
 # Initialize SQLAlchemy and Flask-Migrate
 db.init_app(app)
 migrate = Migrate(app, db)
 mail = Mail(app)
-
 
 # Folder configuration for product images
 app.config['PRODUCT_IMAGE_UPLOAD_FOLDER'] = 'static/img/product_images/'
@@ -99,10 +93,34 @@ def generate_invoice_pdf(user, order, cart_items):
 
     return pdf_output
 
+def send_confirmation_email(user, order):
+    try:
+        # Render the invoice HTML
+        html_content = render_template('invoice.html', user=user, order=order, order_items=order.order_items)
 
+        # Generate PDF from the rendered HTML
+        pdf = BytesIO()
+        pisa_status = pisa.CreatePDF(BytesIO(html_content.encode('utf-8')), dest=pdf)
+        
+        if pisa_status.err:
+            print(f"Failed to create PDF: {pisa_status.err}")
+            return
 
-def allowed_file(filename):
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+        # Create email message
+        msg = Message(
+            subject="Order Confirmation",
+            recipients=[user.email_address],
+            body=f"Dear {user.user_firstname},\n\nYour order #{order.order_id} has been placed successfully.\n\nPlease find your invoice attached.\n\nThank you for shopping with us!\n\nBest regards,\nThe PhonesForU Team"
+        )
+
+        # Attach the PDF to the email
+        msg.attach(f"invoice_{order.order_id}.pdf", "application/pdf", pdf.getvalue())
+
+        # Send the email
+        mail.send(msg)
+    except Exception as e:
+        print(f"Failed to send email: {str(e)}")
+
 
 def save_file(file, upload_folder):
     if file and allowed_file(file.filename):
@@ -730,9 +748,10 @@ def send_invoice_email(order_id):
         pdf_buffer = generate_and_send_invoice_pdf(order, user, order_items)
 
         if pdf_buffer:
-            return 'Invoice sent successfully!', 200
-        else:
-            return 'Failed to send invoice.', 500
+            # Redirect to order_details page with the order_id
+            return redirect(url_for('order_details', order_id=order_id))
+
+        return 'Failed to send invoice.', 500
 
     except Exception as e:
         print(str(e))
@@ -791,6 +810,7 @@ def generate_invoice_pdf(order, order_items):
         return None
 
 
+
 @app.route('/payment', methods=['POST'])
 def payment():
     try:
@@ -802,7 +822,7 @@ def payment():
         shipping_zip = request.form.get('shipping_zip')
         shipping_country = request.form.get('shipping_country')
         user_id = session.get('name')  # Replace with your session management code
-        
+
         # Validate form data
         if not (stripe_token and shipping_address and shipping_city and shipping_state and shipping_country and user_id):
             return jsonify({"error": "Incomplete form data"}), 400
@@ -883,6 +903,10 @@ def payment():
 
         db.session.commit()
 
+        # Send confirmation email with order items
+        order.order_items = [order_item for order_item in OrderItem.query.filter_by(order_id=order.order_id).all()]
+        send_confirmation_email(user, order)
+
         return redirect(url_for('checkout'))
 
     except stripe.error.StripeError as e:
@@ -892,7 +916,8 @@ def payment():
     except Exception as e:
         db.session.rollback()
         return jsonify({"error": str(e)}), 500
-    
+
+
 
 @app.route('/place-order', methods=['POST'])
 def place_order():

@@ -145,9 +145,10 @@
                             <div class="mb-3">
                                 <hr class="new1">
                             </div>
-                            <form action="{{ url_for('generate_invoice') }}" method="POST">
+                            <!-- <form action="{{ url_for('generate_invoice') }}" method="POST">
+                                <input type="hidden" name="order_id" value="{{ order_id }}">
                                 <button type="submit" class="btn btn-primary">Download Invoice</button>
-                            </form>
+                            </form> -->
                             <button class="btn btn-secondary mt-3" onclick="redirectToHomePage()">Go to Home</button>
                         </div>
                     </div>
@@ -218,15 +219,11 @@
                 })
                 .then(response => response.json())
                 .then(data => {
-                    if (data.error) {  console.error(data.error);
+                    if (data.error) {
+                        var errorElement = document.getElementById('card-errors');
+                        errorElement.textContent = data.error;
                     } else {
-                        // Assuming the response contains the order_id for confirmation
                         $('#staticBackdrop').modal('show');
-                        document.getElementById('orderID').textContent = data.order_id;
-
-                        // Clear the cart UI
-                        document.querySelector('tbody').innerHTML = '';
-                        document.getElementById('total_amount').value = '0.00';
                     }
                 })
                 .catch(error => {
@@ -235,8 +232,9 @@
             }
 
             function redirectToHomePage() {
-                window.location.href = '/user-home';  // Adjust this URL to match your home page route
+                window.location.href = "{{ url_for('user_home') }}";
             }
         </script>
+    </div>
 </body>
 </html>
