@@ -21,7 +21,7 @@
         <ul class="nav">
             <li><a href ="/categories">Add New Categories</a></li>
             <li><a href="{{ url_for('showcategories') }}">Display Categories</a></li> 
-            <li><a href="#">Orders</a></li>
+            <li><a href="{{ url_for('merchant_show_orders') }}">Orders</a></li>
             <li><a href="{{ url_for('edit_merchant', company_id=session.get('merchant_name')) }}">My Account</a></li>
             <li><a href="{{ url_for('logout_merchant') }}">Logout</a></li>
         </ul>

@@ -1051,6 +1051,18 @@ def edit_product(product_id):
 
 
 
+@app.route('/merchant/orders')
+def merchant_show_orders():
+    orders = Order.query.all()
+    return render_template('merchant_orders.html', orders=orders)
+
+
+@app.route('/merchant/orders/<int:order_id>')
+def merchant_show_order_details(order_id):
+    order = Order.query.get_or_404(order_id)
+    return render_template('merchant_order_details.html', order=order)
+
+
 @app.route('/productdescription.html')
 def product_description():
     product_id = request.args.get('product_id')
