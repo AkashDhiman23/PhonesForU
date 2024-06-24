@@ -37,10 +37,10 @@ if 'RDS_DB_NAME' in os.environ:
     )
 else:
     # our database uri
-    app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql://postgres:dhiman223@localhost:5432/contactsdb"
-    app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+    app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql://postgres:dhiman223@localhost:5432/ecommercedb"
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
-    
+
 app.config['SESSION_COOKIE_SECURE'] = True
 app.config['SESSION_COOKIE_HTTPONLY'] = True
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
