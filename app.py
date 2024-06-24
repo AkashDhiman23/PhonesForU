@@ -24,11 +24,26 @@ from xhtml2pdf import pisa
 
 app = Flask(__name__)
 # Database configuration
+
+# our database uri
+if 'RDS_DB_NAME' in os.environ:
+    app.config['SQLALCHEMY_DATABASE_URI'] = \
+        'postgresql://{username}:{password}@{host}:{port}/{database}'.format(
+        username=os.environ['RDS_USERNAME'],
+        password=os.environ['RDS_PASSWORD'],
+        host=os.environ['RDS_HOSTNAME'],
+        port=os.environ['RDS_PORT'],
+        database=os.environ['RDS_DB_NAME'],
+    )
+else:
+    # our database uri
+    app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql://postgres:dhiman223@localhost:5432/contactsdb"
+    app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+
+    
 app.config['SESSION_COOKIE_SECURE'] = True
 app.config['SESSION_COOKIE_HTTPONLY'] = True
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
-app.config['SQLALCHEMY_DATABASE_URI'] = "postgresql://postgres:dhiman223@localhost:5432/ecommercedb"
-app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config['STATIC_FOLDER'] = 'static'
 
 # Email configuration
