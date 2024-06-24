@@ -269,7 +269,7 @@ def show_merchantsignup_form():
     return render_template('merchantsignup.html')
 
 
-@app.route('/signupmerchant', methods=['POST'])
+@app.route('/signupmerchant', methods=['POST','GET'])
 def process_merchantsignup_form():
     try:
         # Get form data from request
