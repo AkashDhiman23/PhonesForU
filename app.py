@@ -38,6 +38,16 @@ if 'RDS_DB_NAME' in os.environ:
 else:
     # our database uri
     app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql://postgres:dhiman223@localhost:5432/ecommercedb"
+    '''
+    app.config['SQLALCHEMY_DATABASE_URI'] = \
+        'postgresql://{username}:{password}@{host}:{port}/{database}'.format(
+        username='postgres',
+        password='dhiman223',
+        host='phonesforu-database.c7okcaqcsmam.ap-southeast-2.rds.amazonaws.com',
+        port='5432',
+        database='PhonesForU_flask_db',
+    )
+    '''   
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 
@@ -277,7 +287,9 @@ def process_merchantsignup_form():
 
         # Validate required fields
         required_fields = ['firstname', 'lastname', 'companyregisterno', 'email', 'companyaddress', 'companypostcode', 'mobile', 'password']
+        print(required_fields)
         for field in required_fields:
+            print("IS it here in the for?")
             if field not in data or not data[field]:
                 return jsonify({'success': False, 'message': f'Missing or empty field: {field}'}), 400
         
@@ -286,9 +298,12 @@ def process_merchantsignup_form():
         if existing_user:
             return jsonify({'success': False, 'message': 'Email address is already registered.'}), 400
         
+        print("Before generating hash")
         # Generate password hash
         password_hash = generate_password_hash(data['password'])
+        print("After generating hash")
         
+        print("Before creating user object to save")
         # Create new MerchantUser object
         new_merchantuser = MerchantUser(
             firstname=data['firstname'],
@@ -301,15 +316,23 @@ def process_merchantsignup_form():
             company_registrationno=data['companyregisterno'],
             company_password_hash=password_hash
         )
+        print("NEW MERCHANT object to save is")
+        print(new_merchantuser)
+        print("Before adding to DB session")
+
 
         # Add new user to the database
         db.session.add(new_merchantuser)
+        print("After adding to DB session and before committing the save")
         db.session.commit()  # Commit changes to the database
+        print("After the save")
         
         # Return success response
         return jsonify({'success': True, 'message': 'Merchant signup successful!'})
 
     except Exception as e:
+        print("Exception occured!!")
+        print(str(e))
         # Log error
         app.logger.error(f"Error occurred during signup: {str(e)}")
         return jsonify({'success': False, 'message': 'An error occurred while signing up.'}), 500
