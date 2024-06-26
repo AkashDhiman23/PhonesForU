@@ -37,8 +37,8 @@ if 'RDS_DB_NAME' in os.environ:
     )
 else:
     # our database uri
-    app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql://postgres:dhiman223@localhost:5432/ecommercedb"
-    '''
+    #app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql://postgres:dhiman223@localhost:5432/ecommercedb"
+    
     app.config['SQLALCHEMY_DATABASE_URI'] = \
         'postgresql://{username}:{password}@{host}:{port}/{database}'.format(
         username='postgres',
@@ -47,7 +47,7 @@ else:
         port='5432',
         database='PhonesForU_flask_db',
     )
-    '''   
+     
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 
